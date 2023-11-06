@@ -5,7 +5,7 @@ type CreateVoucherRequest struct {
 	VoucherType     int            `json:"voucher_type" validate:"required"`
 	VoucherCounts   int            `json:"voucher_counts" validate:"required"`
 	Detail          string         `json:"detail" validate:"required"`
-	DiscountPercent float64        `json:"discount_percent" validate:"required"`
+	DiscountPercent float64        `json:"discount_percent"`
 	DiscountValue   int            `json:"discount_value" validate:"required"`
 	VoucherRequire  VoucherRequire `json:"voucher_require" validate:"required"`
 	StatedTime      string         `json:"stated_time" validate:"required"`

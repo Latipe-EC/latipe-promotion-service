@@ -29,7 +29,7 @@ func main() {
 
 	//create connect to mongo
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
-	db := client.Database("latipe_promtion_db")
+	db := client.Database("latipe_promotion_db")
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,6 @@ func main() {
 
 	//create instance resty-go
 	cli := resty.New().
-		SetDebug(true).
 		SetTimeout(5 * time.Second)
 
 	//repository
@@ -75,7 +74,8 @@ func main() {
 	voucher.Get("", authMiddleware.RequiredRoles([]string{"VENDOR", "ADMIN"}), voucherApi.FindAll)
 	voucher.Get("/:id", authMiddleware.RequiredRoles([]string{"VENDOR", "ADMIN"}), voucherApi.GetById)
 	voucher.Get("/code/:code", authMiddleware.RequiredRoles([]string{"VENDOR", "ADMIN"}), voucherApi.GetByCode)
-
+	voucher.Post("/apply", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)
+	voucher.Post("/rollback", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)
 	err = app.Listen(":5010")
 	if err != nil {
 		return

@@ -46,7 +46,7 @@ func (dr VoucherRepository) GetByCode(ctx context.Context, voucherCode string) (
 func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([]entities.Voucher, error) {
 	var delis []entities.Voucher
 
-	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetPage()))
+	opts := options.Find().SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
 	cursor, err := dr.voucherCollection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
 		return nil, err
@@ -59,8 +59,9 @@ func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([
 }
 
 func (dr VoucherRepository) Total(ctx context.Context, query *pagable.Query) (int64, error) {
+	opts := options.Count().SetHint("_id_")
 
-	count, err := dr.voucherCollection.CountDocuments(context.TODO(), bson.D{}, nil)
+	count, err := dr.voucherCollection.CountDocuments(context.TODO(), bson.D{}, opts)
 	if err != nil {
 		return -1, err
 	}
@@ -85,6 +86,25 @@ func (dr VoucherRepository) UpdateStatus(ctx context.Context, voucher *entities.
 		{"$set", bson.D{
 			{"status", voucher.Status},
 			{"update_at", time.Now()},
+		}},
+	}
+	data, err := dr.voucherCollection.UpdateByID(ctx, voucher.ID, update)
+	if err != nil {
+		return err
+	}
+
+	if data.ModifiedCount == 0 {
+		return errors.New("not change")
+	}
+
+	return nil
+}
+
+func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, voucher *entities.Voucher) error {
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"voucher_counts", voucher.VoucherCounts},
 		}},
 	}
 	data, err := dr.voucherCollection.UpdateByID(ctx, voucher.ID, update)

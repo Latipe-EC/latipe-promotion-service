@@ -2,11 +2,13 @@ package voucherserv
 
 import (
 	"context"
+	"errors"
 	"latipe-promotion-services/domain/dto"
 	entities "latipe-promotion-services/domain/entities"
 	repos "latipe-promotion-services/domain/repos"
 	"latipe-promotion-services/pkgs/mapper"
 	"latipe-promotion-services/pkgs/pagable"
+	"time"
 )
 
 type VoucherService struct {
@@ -106,4 +108,74 @@ func (sh VoucherService) GetAllVoucher(ctx context.Context, query *pagable.Query
 	listResp.HasMore = query.GetHasMore(int(total))
 
 	return &listResp, err
+}
+
+func (sh VoucherService) UseVoucher(ctx context.Context, req *dto.UseVoucherRequest) (*dto.UseVoucherResponse, error) {
+	var vouchers []*entities.Voucher
+
+	for _, i := range req.Vouchers {
+		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+		if err != nil {
+			return nil, err
+		}
+
+		if voucher.VoucherCounts > 0 {
+			voucher.VoucherCounts -= 1
+		} else {
+			return nil, errors.New("the voucher amount was sold out")
+		}
+
+		if !voucher.EndedTime.After(time.Now()) && !voucher.StatedTime.Before(time.Now()) &&
+			voucher.Status == entities.IN_ACTIVE {
+			return nil, errors.New("the voucher amount was expired")
+		}
+
+		vouchers = append(vouchers, voucher)
+	}
+
+	if len(vouchers) != len(req.Vouchers) {
+		return nil, errors.New("voucher code was not found")
+	}
+
+	if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers[0]); err != nil {
+		return nil, err
+	}
+
+	if len(req.Vouchers) > 1 && vouchers[0].VoucherType != vouchers[1].VoucherType {
+		if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers[1]); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, errors.New("just one for one type")
+	}
+
+	resp := dto.UseVoucherResponse{}
+	resp.IsSuccess = true
+	if err := mapper.BindingStruct(vouchers, &resp.Items); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto.UseVoucherRequest) error {
+	var vouchers []*entities.Voucher
+
+	for _, i := range req.Vouchers {
+		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+		if err != nil {
+			return err
+		}
+
+		voucher.VoucherCounts += 1
+		vouchers = append(vouchers, voucher)
+	}
+
+	for _, i := range vouchers {
+		if err := sh.voucherRepos.UpdateVoucherCounts(ctx, i); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
