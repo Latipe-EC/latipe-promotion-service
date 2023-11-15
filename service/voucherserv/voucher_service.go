@@ -137,16 +137,12 @@ func (sh VoucherService) UseVoucher(ctx context.Context, req *dto.UseVoucherRequ
 		return nil, errors.New("voucher code was not found")
 	}
 
-	if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers[0]); err != nil {
-		return nil, err
+	if len(req.Vouchers) > 1 && vouchers[0].VoucherType == vouchers[1].VoucherType {
+		return nil, errors.New("just one for one type")
 	}
 
-	if len(req.Vouchers) > 1 && vouchers[0].VoucherType != vouchers[1].VoucherType {
-		if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers[1]); err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, errors.New("just one for one type")
+	if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers); err != nil {
+		return nil, err
 	}
 
 	resp := dto.UseVoucherResponse{}
@@ -171,10 +167,8 @@ func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto.UseVouche
 		vouchers = append(vouchers, voucher)
 	}
 
-	for _, i := range vouchers {
-		if err := sh.voucherRepos.UpdateVoucherCounts(ctx, i); err != nil {
-			return err
-		}
+	if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers); err != nil {
+		return err
 	}
 
 	return nil

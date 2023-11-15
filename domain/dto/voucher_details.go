@@ -14,8 +14,8 @@ type VoucherRespDetail struct {
 	DiscountPercent float64        `json:"discount_percent,omitempty"`
 	DiscountValue   int            `json:"discount_value,omitempty"`
 	VoucherRequire  VoucherReqResp `json:"voucher_require,omitempty"`
-	CreateAt        time.Time      `json:"create_at,omitempty"`
-	UpdateAt        time.Time      `json:"update_at,omitempty"`
+	CreatedAt       time.Time      `json:"created_at,omitempty"`
+	UpdatedAt       time.Time      `json:"updated_at,omitempty"`
 	StatedTime      time.Time      `json:"stated_time,omitempty"`
 	EndedTime       time.Time      `json:"ended_time,omitempty"`
 	Status          int            `json:"status"`

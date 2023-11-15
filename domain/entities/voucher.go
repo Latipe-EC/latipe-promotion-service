@@ -24,8 +24,8 @@ type Voucher struct {
 	DiscountPercent float64            `json:"discount_percent" bson:"discount_percent,omitempty"`
 	DiscountValue   int                `json:"discount_value" bson:"discount_value,omitempty"`
 	VoucherRequire  VoucherRequire     `json:"voucher_require" bson:"voucher_require"`
-	CreateAt        time.Time          `json:"create_at" bson:"create_at,omitempty"`
-	UpdateAt        time.Time          `json:"update_at" bson:"update_at,omitempty"`
+	CreatedAt       time.Time          `json:"created_at" bson:"created_at,omitempty"`
+	UpdatedAt       time.Time          `json:"updated_at" bson:"updated_at,omitempty"`
 	StatedTime      time.Time          `json:"stated_time" bson:"stated_time,omitempty"`
 	EndedTime       time.Time          `json:"ended_time" bson:"ended_time,omitempty"`
 	Status          int                `json:"status" bson:"is_active,omitempty"`
@@ -34,7 +34,7 @@ type Voucher struct {
 type VoucherUsedLog struct {
 	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	VoucherCode string             `json:"delivery_name" bson:"delivery_name,omitempty"`
-	CreateAt    time.Time          `json:"create_at" bson:"create_at,omitempty"`
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at,omitempty"`
 	IsSuccess   bool               `json:"is_success" bson:"is_success,omitempty"`
 }
 

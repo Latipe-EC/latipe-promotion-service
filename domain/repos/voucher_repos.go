@@ -70,8 +70,8 @@ func (dr VoucherRepository) Total(ctx context.Context, query *pagable.Query) (in
 }
 
 func (dr VoucherRepository) CreateVoucher(ctx context.Context, voucher *entities.Voucher) (string, error) {
-	voucher.CreateAt = time.Now()
-	voucher.UpdateAt = time.Now()
+	voucher.CreatedAt = time.Now()
+	voucher.UpdatedAt = time.Now()
 
 	lastId, err := dr.voucherCollection.InsertOne(ctx, voucher)
 	if err != nil {
@@ -100,20 +100,20 @@ func (dr VoucherRepository) UpdateStatus(ctx context.Context, voucher *entities.
 	return nil
 }
 
-func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, voucher *entities.Voucher) error {
-
-	update := bson.D{
-		{"$set", bson.D{
-			{"voucher_counts", voucher.VoucherCounts},
-		}},
-	}
-	data, err := dr.voucherCollection.UpdateByID(ctx, voucher.ID, update)
-	if err != nil {
-		return err
-	}
-
-	if data.ModifiedCount == 0 {
-		return errors.New("not change")
+func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, vouchers []*entities.Voucher) error {
+	for _, i := range vouchers {
+		update := bson.D{
+			{"$set", bson.D{
+				{"voucher_counts", i.VoucherCounts},
+			}},
+		}
+		data, err := dr.voucherCollection.UpdateByID(ctx, i.ID, update)
+		if err != nil {
+			return err
+		}
+		if data.ModifiedCount == 0 {
+			return errors.New("not change")
+		}
 	}
 
 	return nil
