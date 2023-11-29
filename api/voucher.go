@@ -178,3 +178,33 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(dataResp)
 }
+
+func (api VoucherHandle) FindVoucherForUser(ctx *fiber.Ctx) error {
+	context := ctx.Context()
+
+	query, err := pagable.GetQueryFromFiberCtx(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).SendString("Invalid query")
+	}
+	request := dto.GetVoucherListRequest{
+		Query: query,
+	}
+
+	dataResp, err := api.service.GetUserVoucher(context, request.Query)
+	if err != nil {
+		log.Errorf("%v", err)
+		switch err {
+		case mongo.ErrNoDocuments:
+			return ctx.Status(http.StatusNotFound).SendString("Not found")
+		default:
+			return ctx.Status(http.StatusInternalServerError).SendString("Internal Server Error")
+		}
+	}
+
+	if dataResp == nil {
+		log.Errorf("%v", err)
+		return ctx.Status(http.StatusNotFound).SendString("The voucher was not found")
+	}
+
+	return ctx.JSON(dataResp)
+}

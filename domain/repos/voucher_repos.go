@@ -46,8 +46,34 @@ func (dr VoucherRepository) GetByCode(ctx context.Context, voucherCode string) (
 func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([]entities.Voucher, error) {
 	var delis []entities.Voucher
 
+	filter, err := query.ConvertQueryToFilter()
+	if err != nil {
+		return nil, err
+	}
+
 	opts := options.Find().SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
-	cursor, err := dr.voucherCollection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cursor.All(ctx, &delis); err != nil {
+		return nil, err
+	}
+	return delis, err
+}
+
+func (dr VoucherRepository) GetVoucherForUser(ctx context.Context, query *pagable.Query) ([]entities.Voucher, error) {
+	var delis []entities.Voucher
+
+	opts := options.Find().SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
+
+	filter := bson.M{
+		"stated_time": bson.M{"$lt": time.Now()},
+		"ended_time":  bson.M{"$gt": time.Now()},
+		"status":      entities.ACTIVE, // Thêm điều kiện status = 1
+	}
+	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -59,9 +85,13 @@ func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([
 }
 
 func (dr VoucherRepository) Total(ctx context.Context, query *pagable.Query) (int64, error) {
-	opts := options.Count().SetHint("_id_")
+	opts := options.Count().SetHint("_id_").SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
+	filter, err := query.ConvertQueryToFilter()
+	if err != nil {
+		return 0, err
+	}
 
-	count, err := dr.voucherCollection.CountDocuments(context.TODO(), bson.D{}, opts)
+	count, err := dr.voucherCollection.CountDocuments(context.TODO(), filter, opts)
 	if err != nil {
 		return -1, err
 	}

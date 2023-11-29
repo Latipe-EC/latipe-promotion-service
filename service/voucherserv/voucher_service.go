@@ -110,6 +110,29 @@ func (sh VoucherService) GetAllVoucher(ctx context.Context, query *pagable.Query
 	return &listResp, err
 }
 
+func (sh VoucherService) GetUserVoucher(ctx context.Context, query *pagable.Query) (*pagable.ListResponse, error) {
+	vouchers, err := sh.voucherRepos.GetVoucherForUser(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	total, _ := sh.voucherRepos.Total(ctx, query)
+
+	var voucherResp []dto.VoucherUserDetail
+	if err := mapper.BindingStruct(vouchers, &voucherResp); err != nil {
+		return nil, err
+	}
+
+	listResp := pagable.ListResponse{}
+	listResp.Data = voucherResp
+	listResp.Page = query.GetPage()
+	listResp.Size = query.GetSize()
+	listResp.Total = query.GetTotalPages(int(total))
+	listResp.HasMore = query.GetHasMore(int(total))
+
+	return &listResp, err
+}
+
 func (sh VoucherService) UseVoucher(ctx context.Context, req *dto.UseVoucherRequest) (*dto.UseVoucherResponse, error) {
 	var vouchers []*entities.Voucher
 
@@ -126,8 +149,8 @@ func (sh VoucherService) UseVoucher(ctx context.Context, req *dto.UseVoucherRequ
 		}
 
 		if !voucher.EndedTime.After(time.Now()) && !voucher.StatedTime.Before(time.Now()) &&
-			voucher.Status == entities.IN_ACTIVE {
-			return nil, errors.New("the voucher amount was expired")
+			voucher.Status == entities.INACTIVE {
+			return nil, errors.New("the voucher has expired")
 		}
 
 		vouchers = append(vouchers, voucher)

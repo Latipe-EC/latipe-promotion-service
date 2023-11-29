@@ -9,9 +9,9 @@ const (
 	FREE_SHIP      = 1
 	DISCOUNT_ORDER = 2
 
-	PENDING   = 0
-	ACTIVE    = 1
-	IN_ACTIVE = 2
+	PENDING  = 0
+	ACTIVE   = 1
+	INACTIVE = 2
 )
 
 type Voucher struct {

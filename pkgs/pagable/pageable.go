@@ -3,6 +3,7 @@ package pagable
 import (
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"math"
 	"strconv"
 	"strings"
@@ -157,4 +158,37 @@ func (q *Query) ParseQueryParams() (map[string]string, error) {
 		conditions[filter.Field] = fmt.Sprint(filter.Value)
 	}
 	return conditions, nil
+}
+
+// ConvertQueryToFilter converts Query struct to MongoDB filter
+func (q *Query) ConvertQueryToFilter() (bson.M, error) {
+	filter := bson.M{}
+
+	// Add expression filters
+	for _, expr := range q.ExpressionFilters {
+
+		var value interface{}
+		if expr.Field == "voucher_type" {
+			value, _ = strconv.Atoi(fmt.Sprintf("%v", expr.Value))
+		} else {
+			value = fmt.Sprintf("%v", expr.Value)
+		}
+
+		switch expr.Operation {
+		case Equal:
+			filter[expr.Field] = bson.M{"$eq": value}
+		case NotEqual:
+			filter[expr.Field] = bson.M{"$ne": value}
+		case LT:
+			filter[expr.Field] = bson.M{"$lt": value}
+		case LTE:
+			filter[expr.Field] = bson.M{"$lte": value}
+		case GT:
+			filter[expr.Field] = bson.M{"$gt": value}
+		case GTE:
+			filter[expr.Field] = bson.M{"$gte": value}
+		}
+	}
+
+	return filter, nil
 }
