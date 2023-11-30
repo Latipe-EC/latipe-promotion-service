@@ -177,6 +177,46 @@ func (sh VoucherService) UseVoucher(ctx context.Context, req *dto.UseVoucherRequ
 	return &resp, nil
 }
 
+func (sh VoucherService) CheckingVoucher(ctx context.Context, req *dto.UseVoucherRequest) (*dto.UseVoucherResponse, error) {
+	var vouchers []*entities.Voucher
+
+	for _, i := range req.Vouchers {
+		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+		if err != nil {
+			return nil, err
+		}
+
+		if voucher.VoucherCounts > 0 {
+			voucher.VoucherCounts -= 1
+		} else {
+			return nil, errors.New("the voucher amount was sold out")
+		}
+
+		if !voucher.EndedTime.After(time.Now()) && !voucher.StatedTime.Before(time.Now()) &&
+			voucher.Status == entities.INACTIVE {
+			return nil, errors.New("the voucher has expired")
+		}
+
+		vouchers = append(vouchers, voucher)
+	}
+
+	if len(vouchers) != len(req.Vouchers) {
+		return nil, errors.New("voucher code was not found")
+	}
+
+	if len(req.Vouchers) > 1 && vouchers[0].VoucherType == vouchers[1].VoucherType {
+		return nil, errors.New("just one for one type")
+	}
+
+	resp := dto.UseVoucherResponse{}
+	resp.IsSuccess = true
+	if err := mapper.BindingStruct(vouchers, &resp.Items); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto.UseVoucherRequest) error {
 	var vouchers []*entities.Voucher
 

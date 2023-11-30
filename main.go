@@ -93,6 +93,7 @@ func main() {
 	voucher.Get("/code/:code", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.GetByCode)
 	voucher.Post("/apply", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)
 	voucher.Post("/rollback", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)
+	voucher.Post("/checking", authMiddleware.RequiredAuthentication(), voucherApi.CheckingVoucher)
 	err = app.Listen(":5010")
 	if err != nil {
 		return
