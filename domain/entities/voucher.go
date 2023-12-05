@@ -23,12 +23,12 @@ type Voucher struct {
 	OwnerVoucher    string             `json:"owner_voucher" bson:"owner_voucher"`
 	DiscountPercent float64            `json:"discount_percent" bson:"discount_percent,omitempty"`
 	DiscountValue   int                `json:"discount_value" bson:"discount_value,omitempty"`
-	VoucherRequire  VoucherRequire     `json:"voucher_require" bson:"voucher_require"`
+	VoucherRequire  *VoucherRequire    `json:"voucher_require" bson:"voucher_require"`
 	CreatedAt       time.Time          `json:"created_at" bson:"created_at,omitempty"`
 	UpdatedAt       time.Time          `json:"updated_at" bson:"updated_at,omitempty"`
 	StatedTime      time.Time          `json:"stated_time" bson:"stated_time,omitempty"`
 	EndedTime       time.Time          `json:"ended_time" bson:"ended_time,omitempty"`
-	Status          int                `json:"status" bson:"is_active,omitempty"`
+	Status          int                `json:"status" bson:"status,omitempty"`
 }
 
 type VoucherUsedLog struct {
@@ -43,4 +43,13 @@ type VoucherRequire struct {
 	MemberType          int    `json:"member_type,omitempty" bson:"member_type,omitempty"`
 	PaymentMethod       int    `json:"payment_method,omitempty" bson:"payment_method,omitempty"`
 	RequiredOwnerProdId string `json:"required_owner_prod_id,omitempty" bson:"required_owner_prod_id,omitempty"`
+}
+
+type VoucherUsingLog struct {
+	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	VoucherCode string             `json:"voucher_code" bson:"voucher_code,omitempty"`
+	VoucherID   primitive.ObjectID `json:"voucher_type" bson:"voucher_type,omitempty"`
+	OrderID     string             `json:"order_id"  bson:"order_id,omitempty"`
+	Status      int                `json:"status" bson:"status,omitempty"`
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at,omitempty"`
 }

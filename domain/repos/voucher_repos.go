@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"errors"
+	"github.com/gofiber/fiber/v2/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,12 +14,29 @@ import (
 )
 
 type VoucherRepository struct {
-	voucherCollection *mongo.Collection
+	voucherCollection     *mongo.Collection
+	voucherLogsCollection *mongo.Collection
 }
 
 func NewVoucherRepos(db *mongo.Database) VoucherRepository {
-	col := db.Collection("vouchers")
-	return VoucherRepository{voucherCollection: col}
+	voucherCol := db.Collection("vouchers")
+	indexModel := mongo.IndexModel{
+		Keys: bson.M{
+			"voucher_code": 1,
+		},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := voucherCol.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+		panic("error creating unique index:" + err.Error())
+
+	}
+
+	logCol := db.Collection("voucher_using_logs")
+
+	log.Info("voucher code unique index created successfully")
+	return VoucherRepository{voucherCollection: voucherCol, voucherLogsCollection: logCol}
 }
 
 func (dr VoucherRepository) GetById(ctx context.Context, Id string) (*entities.Voucher, error) {
@@ -43,6 +61,7 @@ func (dr VoucherRepository) GetByCode(ctx context.Context, voucherCode string) (
 
 	return &entity, err
 }
+
 func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([]entities.Voucher, error) {
 	var delis []entities.Voucher
 
@@ -51,7 +70,7 @@ func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([
 		return nil, err
 	}
 
-	opts := options.Find().SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetPage() - 1))
 	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
@@ -66,7 +85,7 @@ func (dr VoucherRepository) GetAll(ctx context.Context, query *pagable.Query) ([
 func (dr VoucherRepository) GetVoucherForUser(ctx context.Context, query *pagable.Query) ([]entities.Voucher, error) {
 	var delis []entities.Voucher
 
-	opts := options.Find().SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetPage() - 1))
 
 	filter := bson.M{
 		"stated_time": bson.M{"$lt": time.Now()},
@@ -85,7 +104,7 @@ func (dr VoucherRepository) GetVoucherForUser(ctx context.Context, query *pagabl
 }
 
 func (dr VoucherRepository) Total(ctx context.Context, query *pagable.Query) (int64, error) {
-	opts := options.Count().SetHint("_id_").SetLimit(int64(query.GetSize() - 1)).SetSkip(int64(query.GetPage()))
+	opts := options.Count().SetHint("_id_")
 	filter, err := query.ConvertQueryToFilter()
 	if err != nil {
 		return 0, err
@@ -110,12 +129,22 @@ func (dr VoucherRepository) CreateVoucher(ctx context.Context, voucher *entities
 	return lastId.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
+func (dr VoucherRepository) CreateLogUseVoucher(ctx context.Context, voucher *entities.VoucherUsingLog) error {
+	voucher.CreatedAt = time.Now()
+
+	_, err := dr.voucherLogsCollection.InsertOne(ctx, voucher)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func (dr VoucherRepository) UpdateStatus(ctx context.Context, voucher *entities.Voucher) error {
 
 	update := bson.D{
 		{"$set", bson.D{
 			{"status", voucher.Status},
-			{"update_at", time.Now()},
+			{"updated_at", time.Now()},
 		}},
 	}
 	data, err := dr.voucherCollection.UpdateByID(ctx, voucher.ID, update)

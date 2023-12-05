@@ -8,6 +8,7 @@ import (
 	handler "latipe-promotion-services/api"
 	"latipe-promotion-services/domain/repos"
 	"latipe-promotion-services/middleware"
+	responses "latipe-promotion-services/response"
 	"latipe-promotion-services/service/voucherserv"
 
 	"encoding/json"
@@ -49,6 +50,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() {
 		if err := client.Disconnect(context.TODO()); err != nil {
 			panic(err)
@@ -61,6 +63,7 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 		JSONDecoder:  json.Unmarshal,
 		JSONEncoder:  json.Marshal,
+		ErrorHandler: responses.CustomErrorHandler,
 	})
 	app.Use(logger.New())
 
@@ -90,6 +93,7 @@ func main() {
 	voucher.Get("", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.FindAll)
 	voucher.Get("/user/for-you", authMiddleware.RequiredAuthentication(), voucherApi.FindVoucherForUser)
 	voucher.Get("/:id", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.GetById)
+	voucher.Patch("code/:code", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.UpdateStatusVoucher)
 	voucher.Get("/code/:code", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.GetByCode)
 	voucher.Post("/apply", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)
 	voucher.Post("/rollback", authMiddleware.RequiredAuthentication(), voucherApi.UseVoucher)

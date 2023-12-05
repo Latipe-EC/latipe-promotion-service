@@ -28,7 +28,7 @@ type Query struct {
 }
 
 type ListResponse struct {
-	Data    interface{} `json:"data"`
+	Items   interface{} `json:"items"`
 	Total   int         `json:"total"`
 	Page    int         `json:"page"`
 	Size    int         `json:"size"`
@@ -85,11 +85,17 @@ func (q *Query) GetLimit() int {
 
 // GetPage Get OrderBy
 func (q *Query) GetPage() int {
+	if q.Page == 0 {
+		return 1
+	}
 	return q.Page
 }
 
 // Get OrderBy
 func (q *Query) GetSize() int {
+	if q.Size == 0 {
+		return defaultSize
+	}
 	return q.Size
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"latipe-promotion-services/adapter/userserv"
 	"latipe-promotion-services/adapter/userserv/dto"
-	"net/http"
+	responses "latipe-promotion-services/response"
 	"strings"
 )
 
@@ -20,12 +20,12 @@ func (auth AuthMiddleware) RequiredRoles(roles []string, option ...int) fiber.Ha
 	return func(ctx *fiber.Ctx) error {
 		bearToken := ctx.Get("Authorization")
 		if bearToken == "" || len(strings.Split(bearToken, " ")) < 2 {
-			return ctx.Status(http.StatusUnauthorized).SendString("Unauthenticated")
+			return responses.ErrUnauthenticated
 		}
 
 		str := strings.Split(bearToken, " ")
 		if len(str) < 2 {
-			return ctx.Status(http.StatusUnauthorized).SendString("Unauthenticated")
+			return responses.ErrUnauthenticated
 		}
 
 		bearToken = str[1]
@@ -34,7 +34,7 @@ func (auth AuthMiddleware) RequiredRoles(roles []string, option ...int) fiber.Ha
 
 		resp, err := auth.userServ.Authorization(ctx.Context(), &req)
 		if err != nil {
-			return ctx.Status(http.StatusInternalServerError).SendString("Internal Server Error")
+			return responses.ErrInternalServer
 		}
 
 		for _, i := range roles {
@@ -42,7 +42,7 @@ func (auth AuthMiddleware) RequiredRoles(roles []string, option ...int) fiber.Ha
 				return ctx.Next()
 			}
 		}
-		return ctx.Status(http.StatusForbidden).SendString("Permission Denied")
+		return responses.ErrPermissionDenied
 	}
 }
 
@@ -50,12 +50,12 @@ func (auth AuthMiddleware) RequiredAuthentication() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		bearToken := ctx.Get("Authorization")
 		if bearToken == "" {
-			return ctx.Status(http.StatusUnauthorized).SendString("Unauthenticated")
+			return responses.ErrUnauthenticated
 		}
 
 		str := strings.Split(bearToken, " ")
 		if len(str) < 2 {
-			return ctx.Status(http.StatusUnauthorized).SendString("Unauthenticated")
+			return responses.ErrUnauthenticated
 		}
 
 		bearToken = str[1]
@@ -64,7 +64,7 @@ func (auth AuthMiddleware) RequiredAuthentication() fiber.Handler {
 		}
 		resp, err := auth.userServ.Authorization(ctx.Context(), &req)
 		if err != nil {
-			return ctx.Status(http.StatusInternalServerError).SendString("Internal Server Error")
+			return responses.ErrInternalServer
 		}
 
 		ctx.Locals("user_name", resp.Email)
