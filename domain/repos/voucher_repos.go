@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"latipe-promotion-services/domain/entities"
 	"latipe-promotion-services/pkgs/pagable"
+	"strings"
 	"time"
 )
 
@@ -54,7 +55,7 @@ func (dr VoucherRepository) GetById(ctx context.Context, Id string) (*entities.V
 func (dr VoucherRepository) GetByCode(ctx context.Context, voucherCode string) (*entities.Voucher, error) {
 	var entity entities.Voucher
 
-	err := dr.voucherCollection.FindOne(ctx, bson.M{"voucher_code": voucherCode}).Decode(&entity)
+	err := dr.voucherCollection.FindOne(ctx, bson.M{"voucher_code": strings.ToUpper(voucherCode)}).Decode(&entity)
 	if err != nil {
 		return nil, err
 	}

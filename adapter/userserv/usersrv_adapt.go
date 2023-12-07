@@ -60,19 +60,19 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 		Post(req.URL())
 
 	if err != nil {
-		log.Errorf("[%s] [Authorize token]: %s", "ERROR", err)
+		log.Errorf("[Authorize token]: %s", err)
 		return nil, err
 	}
 
 	if resp.StatusCode() >= 500 {
-		log.Errorf("[%s] [Authorize token]: %s", "ERROR", resp.Body())
+		log.Errorf("[Authorize token]: %s", resp.Body())
 		return nil, err
 	}
 
 	var regResp *dto.AuthorizationResponse
 
 	if err := json.Unmarshal(resp.Body(), &regResp); err != nil {
-		log.Errorf("[%s] [Authorize token]: %s", "ERROR", err)
+		log.Errorf("[Authorize token]: %s", err)
 		return nil, err
 	}
 

@@ -14,5 +14,5 @@ type CheckingVoucherRequest struct {
 	Vouchers         []string `json:"vouchers" validate:"required"`
 	OrderTotalAmount int      `json:"order_total_amount" validate:"required"`
 	PaymentMethod    int      `json:"payment_method" validate:"required"`
-	UserId           string   `json:"user_id" validate:"required"`
+	UserId           string   `json:"user_id"`
 }
