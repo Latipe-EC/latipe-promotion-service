@@ -12,7 +12,7 @@ import (
 )
 
 const userServHost = "http://localhost:5000"
-const authServHost = "http://172.20.64.1:8081"
+const authServHost = "http://localhost:8081"
 
 type UserService struct {
 	restyClient *resty.Client
