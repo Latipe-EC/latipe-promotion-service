@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/ansrivas/fiberprometheus/v2"
 	"go.mongodb.org/mongo-driver/event"
 	"latipe-promotion-services/adapter/userserv"
 	handler "latipe-promotion-services/api"
@@ -65,7 +66,21 @@ func main() {
 		JSONEncoder:  json.Marshal,
 		ErrorHandler: responses.CustomErrorHandler,
 	})
+	// cai thang nay` wrapper dong code kia roi
+	prometheus := fiberprometheus.New("promotion-service")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
 	app.Use(logger.New())
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		s := struct {
+			Message string `json:"message"`
+			Version string `json:"version"`
+		}{
+			Message: "Promotion service was developed by TienDat",
+			Version: "v0.0.1",
+		}
+		return ctx.JSON(s)
+	})
 
 	//create instance resty-go
 	cli := resty.New().
@@ -86,6 +101,7 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(&userServ)
 
 	api := app.Group("/api")
+
 	v1 := api.Group("/v1")
 
 	voucher := v1.Group("/vouchers")
