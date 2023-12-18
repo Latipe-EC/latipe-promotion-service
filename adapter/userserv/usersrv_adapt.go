@@ -11,8 +11,8 @@ import (
 	"latipe-promotion-services/pkgs/mapper"
 )
 
-const userServHost = "http://172.20.64.1:8181"
-const authServHost = "http://172.20.64.1:8081"
+const userServHost = "http://localhost:8181"
+const authServHost = "http://localhost:8081"
 
 type UserService struct {
 	restyClient *resty.Client
