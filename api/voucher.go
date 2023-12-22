@@ -278,8 +278,9 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 	request := dto.GetVoucherListRequest{
 		Query: query,
 	}
+	search := ctx.Query("search")
 
-	dataResp, err := api.service.GetAllVoucher(context, request.Query)
+	dataResp, err := api.service.GetAllVoucher(context, search, request.Query)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {
@@ -306,7 +307,9 @@ func (api VoucherHandle) FindVoucherForUser(ctx *fiber.Ctx) error {
 		Query: query,
 	}
 
-	dataResp, err := api.service.GetUserVoucher(context, request.Query)
+	voucherCode := ctx.Query("search")
+
+	dataResp, err := api.service.GetUserVoucher(context, voucherCode, request.Query)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {

@@ -107,7 +107,7 @@ func main() {
 	voucher := v1.Group("/vouchers")
 	voucher.Post("", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.CreateNewVoucher)
 	voucher.Get("", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.FindAll)
-	voucher.Get("/user/for-you", authMiddleware.RequiredAuthentication(), voucherApi.FindVoucherForUser)
+	voucher.Get("/user/foryou", voucherApi.FindVoucherForUser)
 	voucher.Get("/:id", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.GetById)
 	voucher.Patch("code/:code", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.UpdateStatusVoucher)
 	voucher.Get("/code/:code", authMiddleware.RequiredRoles([]string{"ADMIN"}), voucherApi.GetByCode)

@@ -103,13 +103,11 @@ func (sh VoucherService) GetVoucherById(ctx context.Context, id string) (*dto.Vo
 	return &voucherResp, err
 }
 
-func (sh VoucherService) GetAllVoucher(ctx context.Context, query *pagable.Query) (*pagable.ListResponse, error) {
-	vouchers, err := sh.voucherRepos.GetAll(ctx, query)
+func (sh VoucherService) GetAllVoucher(ctx context.Context, voucherCode string, query *pagable.Query) (*pagable.ListResponse, error) {
+	vouchers, total, err := sh.voucherRepos.GetAll(ctx, voucherCode, query)
 	if err != nil {
 		return nil, err
 	}
-
-	total, _ := sh.voucherRepos.Total(ctx, query)
 
 	var voucherResp []dto.VoucherRespDetail
 	if err := mapper.BindingStruct(vouchers, &voucherResp); err != nil {
@@ -126,13 +124,11 @@ func (sh VoucherService) GetAllVoucher(ctx context.Context, query *pagable.Query
 	return &listResp, err
 }
 
-func (sh VoucherService) GetUserVoucher(ctx context.Context, query *pagable.Query) (*pagable.ListResponse, error) {
-	vouchers, err := sh.voucherRepos.GetVoucherForUser(ctx, query)
+func (sh VoucherService) GetUserVoucher(ctx context.Context, voucherCode string, query *pagable.Query) (*pagable.ListResponse, error) {
+	vouchers, total, err := sh.voucherRepos.GetVoucherForUser(ctx, voucherCode, query)
 	if err != nil {
 		return nil, err
 	}
-
-	total, _ := sh.voucherRepos.Total(ctx, query)
 
 	var voucherResp []dto.VoucherUserDetail
 	if err := mapper.BindingStruct(vouchers, &voucherResp); err != nil {

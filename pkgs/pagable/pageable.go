@@ -7,6 +7,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -178,6 +179,22 @@ func (q *Query) ConvertQueryToFilter() (bson.M, error) {
 			value, _ = strconv.Atoi(fmt.Sprintf("%v", expr.Value))
 		} else {
 			value = fmt.Sprintf("%v", expr.Value)
+		}
+
+		if expr.Field == "is_expired" {
+			val, err := strconv.ParseBool(fmt.Sprintf("%v", expr.Value))
+			if err != nil {
+				val = false
+			}
+
+			if val == true {
+				value = bson.D{{"$lt", time.Now()}}
+			} else {
+				value = bson.D{{"$gte", time.Now()}}
+			}
+
+			filter["ended_time"] = value
+			continue
 		}
 
 		switch expr.Operation {
