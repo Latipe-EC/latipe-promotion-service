@@ -81,6 +81,9 @@ func (q *Query) GetOffset() int {
 
 // GetLimit Get limit
 func (q *Query) GetLimit() int {
+	if q.Size == 0 {
+		return 1
+	}
 	return q.Size
 }
 

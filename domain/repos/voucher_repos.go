@@ -82,7 +82,7 @@ func (dr VoucherRepository) GetAll(ctx context.Context, voucherCode string, quer
 		filter["$text"] = bson.M{"$search": voucherCode}
 	}
 
-	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetPage() - 1))
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetOffset()))
 	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, 0, err
@@ -102,7 +102,7 @@ func (dr VoucherRepository) GetAll(ctx context.Context, voucherCode string, quer
 func (dr VoucherRepository) GetVoucherForUser(ctx context.Context, voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
 	var delis []entities.Voucher
 
-	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetPage() - 1))
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetOffset()))
 
 	filter, err := query.ConvertQueryToFilter()
 	if err != nil {
