@@ -1,0 +1,40 @@
+GmailHostConfig:
+  EmailSender: testing.email.it2k2@gmail.com
+  Password:
+  StmpHost: smtp.gmail.com
+  StmpPort: 587
+
+EmailTemplate:
+  OrderTemplate: order_template.html
+  RegisterTemplate: register_template.html
+  ForgotPassTemplate: forgotPass_template.html
+  ConfirmLinkTemplate: confirm_link_template.html
+  DeliveryAccountTemplate: delivery_template.html
+  ConfirmTakeoutTemplate: confirm_takeout_template.html
+
+
+RabbitMQ:
+  Connection: amqp://guest:guest@localhost:5672/
+  ProducerName: email_service
+  ConsumerName: email_service
+  Exchange: email_topic_exchange
+
+  UserRegisterTopic:
+    RoutingKey: email.user.register
+  DeliveryRegisterTopic:
+    RoutingKey: email.delivery.register
+  ForgotPasswordTopic:
+    RoutingKey: email.forgot_password
+  TakeoutConfirmTopic:
+    RoutingKey: email.payment.withdraw
+
+  TransactionPublisher:
+    Exchange: order_transaction_ex
+    CommitRoutingKey: order.email.create
+    RollbackRoutingKey: order.email.rollback
+    ReplyRoutingKey: order.email.reply
+
+
+
+
+HostURL: http://localhost:5173
