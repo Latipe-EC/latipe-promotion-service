@@ -11,11 +11,13 @@ import (
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"google.golang.org/grpc"
 	"latipe-promotion-services/config"
 	"latipe-promotion-services/internal/adapter/userserv"
 	"latipe-promotion-services/internal/api"
 	"latipe-promotion-services/internal/domain/repos"
 	"latipe-promotion-services/internal/middleware"
+	"latipe-promotion-services/internal/protobuf/vouchergrpc"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/internal/subs/createPurchase"
@@ -37,6 +39,7 @@ func New() (*Server, error) {
 	}
 	voucherRepository := repos.NewVoucherRepos(mongoClient)
 	voucherService := voucherserv.NewVoucherService(voucherRepository)
+	voucherServiceGRPCServer := vouchergrpc.NewVoucherServerGRPC(voucherService)
 	voucherHandle := api.NewVoucherHandler(voucherService)
 	userService := userserv.NewUserService(configConfig)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
@@ -44,7 +47,7 @@ func New() (*Server, error) {
 	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	purchaseCreateSubscriber := createPurchase.NewPurchaseCreateSubscriber(configConfig, voucherService, connection)
 	purchaseRollbackSubscriber := createPurchase.NewPurchaseRollbackSubscriber(configConfig, voucherService, connection)
-	server := NewServer(configConfig, voucherRouter, purchaseCreateSubscriber, purchaseRollbackSubscriber)
+	server := NewServer(configConfig, voucherServiceGRPCServer, voucherRouter, purchaseCreateSubscriber, purchaseRollbackSubscriber)
 	return server, nil
 }
 
@@ -53,12 +56,14 @@ func New() (*Server, error) {
 type Server struct {
 	app                  *fiber.App
 	cfg                  *config.Config
+	grpcServ             *grpc.Server
 	purchaseSubs         *createPurchase.PurchaseCreateSubscriber
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber
 }
 
 func NewServer(
 	cfg *config.Config,
+	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
 	voucherRouter router.VoucherRouter,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber) *Server {
@@ -91,11 +96,15 @@ func NewServer(
 
 	voucherRouter.Init(&v1)
 
+	grpcServ := grpc.NewServer()
+	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
+
 	return &Server{
 		cfg:                  cfg,
 		app:                  app,
 		purchaseSubs:         purchaseSubs,
 		rollbackPurchaseSubs: rollbackPurchaseSubs,
+		grpcServ:             grpcServ,
 	}
 }
 
@@ -105,6 +114,10 @@ func (serv Server) App() *fiber.App {
 
 func (serv Server) Config() *config.Config {
 	return serv.cfg
+}
+
+func (serv Server) GrpcServ() *grpc.Server {
+	return serv.grpcServ
 }
 
 func (serv Server) CommitPurchaseTransactionSubscriber() *createPurchase.PurchaseCreateSubscriber {

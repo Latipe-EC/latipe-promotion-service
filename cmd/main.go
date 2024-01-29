@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2/log"
 	server "latipe-promotion-services/internal"
+	"net"
 	"runtime"
 	"sync"
 )
@@ -31,8 +32,23 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := serv.App().Listen(serv.Config().Server.Port); err != nil {
+		if err := serv.App().Listen(serv.Config().Server.RestPort); err != nil {
 			fmt.Printf("%s", err)
+		}
+	}()
+
+	//grpc handler
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Info("Init grpc server")
+		lis, err := net.Listen("tcp", serv.Config().Server.GrpcPort)
+		if err != nil {
+			log.Fatalf("failed to listen: %v\n", err)
+		}
+
+		if err := serv.GrpcServ().Serve(lis); err != nil {
+			log.Infof("%s", err)
 		}
 	}()
 

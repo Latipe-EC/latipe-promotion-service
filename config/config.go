@@ -22,7 +22,8 @@ type Server struct {
 	Name                string
 	ApiHeaderKey        string
 	AppVersion          string
-	Port                string
+	RestPort            string
+	GrpcPort            string
 	BaseURI             string
 	Mode                string
 	ReadTimeout         time.Duration

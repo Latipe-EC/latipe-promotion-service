@@ -185,7 +185,7 @@ func (sh VoucherService) UseVoucher(ctx context.Context, req *dto2.UseVoucherReq
 		usingLog := entities.VoucherUsingLog{
 			VoucherCode: i.VoucherCode,
 			VoucherID:   i.ID,
-			OrderID:     req.OrderUUID,
+			OrderID:     req.OrderID,
 			Status:      1,
 			CreatedAt:   time.Now(),
 		}

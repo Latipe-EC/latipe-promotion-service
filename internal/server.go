@@ -9,11 +9,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/google/wire"
+	"google.golang.org/grpc"
 	"latipe-promotion-services/config"
 	"latipe-promotion-services/internal/adapter"
 	"latipe-promotion-services/internal/api"
 	"latipe-promotion-services/internal/domain/repos"
 	"latipe-promotion-services/internal/middleware"
+	"latipe-promotion-services/internal/protobuf"
+	"latipe-promotion-services/internal/protobuf/vouchergrpc"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services"
 	subscriber "latipe-promotion-services/internal/subs"
@@ -26,6 +29,7 @@ import (
 type Server struct {
 	app                  *fiber.App
 	cfg                  *config.Config
+	grpcServ             *grpc.Server
 	purchaseSubs         *createPurchase.PurchaseCreateSubscriber
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber
 }
@@ -36,6 +40,7 @@ func New() (*Server, error) {
 		config.Set,
 		mongodb.Set,
 		rabbitclient.Set,
+		protobuf.Set,
 		router.Set,
 		repos.Set,
 		services.Set,
@@ -48,6 +53,7 @@ func New() (*Server, error) {
 
 func NewServer(
 	cfg *config.Config,
+	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
 	voucherRouter router.VoucherRouter,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber) *Server {
@@ -80,11 +86,16 @@ func NewServer(
 
 	voucherRouter.Init(&v1)
 
+	//init grpc
+	grpcServ := grpc.NewServer()
+	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
+
 	return &Server{
 		cfg:                  cfg,
 		app:                  app,
 		purchaseSubs:         purchaseSubs,
 		rollbackPurchaseSubs: rollbackPurchaseSubs,
+		grpcServ:             grpcServ,
 	}
 }
 
@@ -94,6 +105,10 @@ func (serv Server) App() *fiber.App {
 
 func (serv Server) Config() *config.Config {
 	return serv.cfg
+}
+
+func (serv Server) GrpcServ() *grpc.Server {
+	return serv.grpcServ
 }
 
 func (serv Server) CommitPurchaseTransactionSubscriber() *createPurchase.PurchaseCreateSubscriber {
