@@ -13,6 +13,8 @@ setup:
 wire:
 	cd internal/ && wire
 
+protoc:
+	protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative  .\internal\grpcservice\vouchergrpc\voucher_grpc.proto
 #linux
 # clean build file
 cleanl:

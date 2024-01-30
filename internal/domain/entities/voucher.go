@@ -15,7 +15,7 @@ const (
 )
 
 type Voucher struct {
-	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID              primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	VoucherCode     string             `json:"voucher_code" bson:"voucher_code,omitempty"`
 	VoucherType     int                `json:"voucher_type" bson:"voucher_type,omitempty"`
 	VoucherCounts   int                `json:"voucher_counts" bson:"voucher_counts,omitempty"`
@@ -32,7 +32,7 @@ type Voucher struct {
 }
 
 type VoucherUsedLog struct {
-	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	VoucherCode string             `json:"delivery_name" bson:"delivery_name,omitempty"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at,omitempty"`
 	IsSuccess   bool               `json:"is_success" bson:"is_success,omitempty"`
@@ -46,7 +46,7 @@ type VoucherRequire struct {
 }
 
 type VoucherUsingLog struct {
-	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	VoucherCode string             `json:"voucher_code" bson:"voucher_code,omitempty"`
 	VoucherID   primitive.ObjectID `json:"voucher_type" bson:"voucher_type,omitempty"`
 	OrderID     string             `json:"order_id"  bson:"order_id,omitempty"`

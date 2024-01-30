@@ -16,6 +16,7 @@ type Config struct {
 	AdapterService AdapterService
 	RabbitMQ       RabbitMQ
 	Mongodb        Mongodb
+	GRPC           GRPC
 }
 
 type Server struct {
@@ -23,7 +24,6 @@ type Server struct {
 	ApiHeaderKey        string
 	AppVersion          string
 	RestPort            string
-	GrpcPort            string
 	BaseURI             string
 	Mode                string
 	ReadTimeout         time.Duration
@@ -34,6 +34,11 @@ type Server struct {
 	Debug               bool
 	MaxCountRequest     int           // max count of connections
 	ExpirationLimitTime time.Duration //  expiration time of the limit
+}
+
+type GRPC struct {
+	RootApiKey string
+	Port       string
 }
 
 type Mongodb struct {

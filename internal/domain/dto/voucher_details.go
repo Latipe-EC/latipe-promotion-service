@@ -5,7 +5,7 @@ import (
 )
 
 type VoucherRespDetail struct {
-	ID              string         `json:"_id,omitempty"`
+	ID              string         `json:"id,omitempty"`
 	VoucherCode     string         `json:"voucher_code"`
 	VoucherType     int            `json:"voucher_type"`
 	VoucherCounts   int            `json:"voucher_counts,omitempty"`
@@ -29,7 +29,7 @@ type VoucherReqResp struct {
 }
 
 type VoucherUserDetail struct {
-	ID              string         `json:"_id,omitempty"`
+	ID              string         `json:"id,omitempty"`
 	VoucherCode     string         `json:"voucher_code"`
 	VoucherType     int            `json:"voucher_type"`
 	VoucherCounts   int            `json:"voucher_counts,omitempty"`

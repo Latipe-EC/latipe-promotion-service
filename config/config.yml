@@ -4,7 +4,6 @@ Server:
   ApiHeaderKey: ccfe5596a56098c7a38b06dc42d0ec409bbab643bce1ea4007b4201d26fd056d
   BaseURI: 127.0.0.1:5010
   RestPort: :5010
-  GrpcPort: :6010
   Mode: local
   ReadTimeout: 5s
   WriteTimeout: 5s
@@ -12,7 +11,10 @@ Server:
   CtxDefaultTimeout: 5
   ExpirationLimitTime: 30s
 
-DB:
+GRPC:
+  RootApiKey: 410c25c9a9cf2c18866604919c4298c007114cb8
+  Port: :6010
+
 Mongodb:
   ConnectionString: mongodb://localhost:27017/
   Address:

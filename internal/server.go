@@ -14,9 +14,10 @@ import (
 	"latipe-promotion-services/internal/adapter"
 	"latipe-promotion-services/internal/api"
 	"latipe-promotion-services/internal/domain/repos"
+	"latipe-promotion-services/internal/grpcservice"
+	"latipe-promotion-services/internal/grpcservice/interceptor"
+	"latipe-promotion-services/internal/grpcservice/vouchergrpc"
 	"latipe-promotion-services/internal/middleware"
-	"latipe-promotion-services/internal/protobuf"
-	"latipe-promotion-services/internal/protobuf/vouchergrpc"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services"
 	subscriber "latipe-promotion-services/internal/subs"
@@ -40,7 +41,7 @@ func New() (*Server, error) {
 		config.Set,
 		mongodb.Set,
 		rabbitclient.Set,
-		protobuf.Set,
+		grpcservice.Set,
 		router.Set,
 		repos.Set,
 		services.Set,
@@ -55,6 +56,7 @@ func NewServer(
 	cfg *config.Config,
 	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
 	voucherRouter router.VoucherRouter,
+	grpcInterceptor *interceptor.GrpcInterceptor,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber) *Server {
 
@@ -87,7 +89,7 @@ func NewServer(
 	voucherRouter.Init(&v1)
 
 	//init grpc
-	grpcServ := grpc.NewServer()
+	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
 	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
 
 	return &Server{

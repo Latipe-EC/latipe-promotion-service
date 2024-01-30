@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "vouchergrpc/";
+
+
+service VoucherServiceGRPC {
+  rpc CheckingVoucher(CheckingVoucherRequest) returns (CheckingVoucherResponse){}
+  rpc ApplyVoucher(UseVoucherRequest) returns(ApplyVoucherResponse){}
+}
+
+message UseVoucherRequest {
+  string order_id = 1;
+  repeated string vouchers = 2;
+}
+
+message VoucherRespDetail {
+  string id = 1;
+  string voucher_code = 2;
+  int32 voucher_type = 3;
+  int32 voucher_counts = 4;
+  string detail = 5;
+  string owner_voucher = 6;
+  double discount_percent = 7;
+  int64 discount_value = 8;
+  VoucherReqResp voucher_require = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp stated_time = 12;
+  google.protobuf.Timestamp ended_time = 13;
+  int32 status = 14;
+}
+
+message VoucherReqResp {
+  int64 min_require = 1;
+  int32 member_type = 2;
+  int32 payment_method = 3;
+  string required_owner_prod_id = 4;
+}
+
+message CheckingVoucherResponse {
+  bool is_success = 1;
+  repeated VoucherRespDetail items = 2;
+}
+
+message ApplyVoucherResponse {
+  bool is_success = 1;
+}
+
+message CheckingVoucherRequest {
+  repeated string vouchers = 1;
+  int64 order_total_amount = 2;
+  int32 payment_method = 3;
+  string user_id = 4;
+}

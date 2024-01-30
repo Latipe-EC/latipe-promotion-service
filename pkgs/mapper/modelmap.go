@@ -2,8 +2,23 @@ package mapper
 
 import (
 	"encoding/json"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"reflect"
 )
+
+// BindingStruct - biding struct to struct
+func BindingStructGrpc(src interface{}, desc proto.Message) error {
+	byteSrc, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+	// binding to desc
+	if err := protojson.Unmarshal(byteSrc, desc); err != nil {
+		return err
+	}
+	return nil
+}
 
 // BindingStruct - biding struct to struct
 func BindingStruct(src interface{}, desc interface{}) error {

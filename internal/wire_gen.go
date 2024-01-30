@@ -16,8 +16,9 @@ import (
 	"latipe-promotion-services/internal/adapter/userserv"
 	"latipe-promotion-services/internal/api"
 	"latipe-promotion-services/internal/domain/repos"
+	"latipe-promotion-services/internal/grpcservice/interceptor"
+	"latipe-promotion-services/internal/grpcservice/vouchergrpc"
 	"latipe-promotion-services/internal/middleware"
-	"latipe-promotion-services/internal/protobuf/vouchergrpc"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/internal/subs/createPurchase"
@@ -44,10 +45,11 @@ func New() (*Server, error) {
 	userService := userserv.NewUserService(configConfig)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
 	voucherRouter := router.NewVoucherRouter(voucherHandle, authMiddleware)
+	grpcInterceptor := interceptor.NewGrpcInterceptor(configConfig)
 	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	purchaseCreateSubscriber := createPurchase.NewPurchaseCreateSubscriber(configConfig, voucherService, connection)
 	purchaseRollbackSubscriber := createPurchase.NewPurchaseRollbackSubscriber(configConfig, voucherService, connection)
-	server := NewServer(configConfig, voucherServiceGRPCServer, voucherRouter, purchaseCreateSubscriber, purchaseRollbackSubscriber)
+	server := NewServer(configConfig, voucherServiceGRPCServer, voucherRouter, grpcInterceptor, purchaseCreateSubscriber, purchaseRollbackSubscriber)
 	return server, nil
 }
 
@@ -65,6 +67,7 @@ func NewServer(
 	cfg *config.Config,
 	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
 	voucherRouter router.VoucherRouter,
+	grpcInterceptor *interceptor.GrpcInterceptor,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
 	rollbackPurchaseSubs *createPurchase.PurchaseRollbackSubscriber) *Server {
 
@@ -96,7 +99,7 @@ func NewServer(
 
 	voucherRouter.Init(&v1)
 
-	grpcServ := grpc.NewServer()
+	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
 	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
 
 	return &Server{
