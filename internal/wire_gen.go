@@ -19,6 +19,7 @@ import (
 	"latipe-promotion-services/internal/grpcservice/interceptor"
 	"latipe-promotion-services/internal/grpcservice/vouchergrpc"
 	"latipe-promotion-services/internal/middleware"
+	"latipe-promotion-services/internal/publisher/purchaseCreate"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/internal/subs/createPurchase"
@@ -39,14 +40,15 @@ func New() (*Server, error) {
 		return nil, err
 	}
 	voucherRepository := repos.NewVoucherRepos(mongoClient)
-	voucherService := voucherserv.NewVoucherService(voucherRepository)
+	connection := rabbitclient.NewRabbitClientConnection(configConfig)
+	replyPurchaseTransactionPub := purchaseCreate.NewReplyPurchaseTransactionPub(configConfig, connection)
+	voucherService := voucherserv.NewVoucherService(voucherRepository, replyPurchaseTransactionPub)
 	voucherServiceServer := vouchergrpc.NewVoucherServerGRPC(voucherService)
 	voucherHandle := api.NewVoucherHandler(voucherService)
 	userService := userserv.NewUserService(configConfig)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
 	voucherRouter := router.NewVoucherRouter(voucherHandle, authMiddleware)
 	grpcInterceptor := interceptor.NewGrpcInterceptor(configConfig)
-	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	purchaseCreateSubscriber := createPurchase.NewPurchaseCreateSubscriber(configConfig, voucherService, connection)
 	purchaseRollbackSubscriber := createPurchase.NewPurchaseRollbackSubscriber(configConfig, voucherService, connection)
 	server := NewServer(configConfig, voucherServiceServer, voucherRouter, grpcInterceptor, purchaseCreateSubscriber, purchaseRollbackSubscriber)

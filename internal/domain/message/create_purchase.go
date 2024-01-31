@@ -1,5 +1,10 @@
 package message
 
+const (
+	COMMIT_SUCCESS = 1
+	COMMIT_FAIL    = 0
+)
+
 type CreatePurchaseMessage struct {
 	OrderID       string   `json:"order_id" validate:"required"`
 	PaymentMethod int      `json:"payment_method"`

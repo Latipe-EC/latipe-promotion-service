@@ -18,6 +18,7 @@ import (
 	"latipe-promotion-services/internal/grpcservice/interceptor"
 	"latipe-promotion-services/internal/grpcservice/vouchergrpc"
 	"latipe-promotion-services/internal/middleware"
+	"latipe-promotion-services/internal/publisher"
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services"
 	subscriber "latipe-promotion-services/internal/subs"
@@ -40,6 +41,7 @@ func New() (*Server, error) {
 		NewServer,
 		config.Set,
 		mongodb.Set,
+		publisher.Set,
 		rabbitclient.Set,
 		grpcservice.Set,
 		router.Set,

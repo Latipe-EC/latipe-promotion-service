@@ -7,20 +7,24 @@ import (
 	"latipe-promotion-services/internal/domain/entities"
 	"latipe-promotion-services/internal/domain/message"
 	"latipe-promotion-services/internal/domain/repos"
+	"latipe-promotion-services/internal/publisher/purchaseCreate"
 	"latipe-promotion-services/pkgs/mapper"
 	"latipe-promotion-services/pkgs/pagable"
-	"latipe-promotion-services/pkgs/response"
+	responses "latipe-promotion-services/pkgs/response"
 	"strings"
 	"time"
 )
 
 type VoucherService struct {
 	voucherRepos *repos.VoucherRepository
+	voucherReply *purchaseCreate.ReplyPurchaseTransactionPub
 }
 
-func NewVoucherService(provinceRepo *repos.VoucherRepository) *VoucherService {
+func NewVoucherService(provinceRepo *repos.VoucherRepository,
+	voucherReply *purchaseCreate.ReplyPurchaseTransactionPub) *VoucherService {
 	return &VoucherService{
 		voucherRepos: provinceRepo,
+		voucherReply: voucherReply,
 	}
 }
 
@@ -276,60 +280,74 @@ func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto2.UseVouch
 	return nil
 }
 
-func (sh VoucherService) UseVoucherTransaction(ctx context.Context, req *message.CreatePurchaseMessage) error {
+func (sh VoucherService) UseVoucherTransaction(ctx context.Context, msg *message.CreatePurchaseMessage) error {
+	// Initialize reply message
+	msgReply := message.ReplyPurchaseMessage{
+		OrderID: msg.OrderID,
+		Status:  message.COMMIT_SUCCESS, // Assume success until an error occurs
+	}
+
+	// Defer the reply message publishing
+	defer func(replyPub *purchaseCreate.ReplyPurchaseTransactionPub, replyMsg *message.ReplyPurchaseMessage) {
+		err := replyPub.ReplyPurchaseMessage(replyMsg)
+		if err != nil {
+			log.Error(err)
+		}
+	}(sh.voucherReply, &msgReply)
+
 	var vouchers []*entities.Voucher
 
-	for _, i := range req.Vouchers {
-		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+	for _, voucherCode := range msg.Vouchers {
+		voucher, err := sh.voucherRepos.GetByCode(ctx, voucherCode)
 		if err != nil {
 			return err
 		}
 
-		if voucher.VoucherCounts > 0 {
-			voucher.VoucherCounts -= 1
-		} else {
+		// Check voucher validity
+		if voucher.VoucherCounts <= 0 || voucher.Status != entities.ACTIVE ||
+			!voucher.StatedTime.Before(time.Now()) || !voucher.EndedTime.After(time.Now()) {
 			return responses.ErrVoucherExpiredOrOutOfStock
 		}
 
-		if !voucher.EndedTime.After(time.Now()) && !voucher.StatedTime.Before(time.Now()) ||
-			voucher.Status != entities.ACTIVE {
-			return responses.ErrVoucherExpiredOrOutOfStock
-		}
+		// Decrement voucher counts
+		voucher.VoucherCounts--
 
 		vouchers = append(vouchers, voucher)
 	}
 
-	if len(vouchers) != len(req.Vouchers) {
+	// Check if all vouchers were found
+	if len(vouchers) != len(msg.Vouchers) {
+		msgReply.Status = message.COMMIT_FAIL
 		return responses.ErrBadRequest
 	}
 
-	if len(req.Vouchers) > 1 && vouchers[0].VoucherType == vouchers[1].VoucherType {
+	// Check for duplicate voucher types
+	if len(msg.Vouchers) > 1 && vouchers[0].VoucherType == vouchers[1].VoucherType {
+		msgReply.Status = message.COMMIT_FAIL
 		return responses.ErrDuplicateType
 	}
 
+	// Update voucher counts in the repository
 	if err := sh.voucherRepos.UpdateVoucherCounts(ctx, vouchers); err != nil {
+		msgReply.Status = message.COMMIT_FAIL
 		return err
 	}
 
-	for _, i := range vouchers {
+	// Create voucher using logs
+	for _, voucher := range vouchers {
 		usingLog := entities.VoucherUsingLog{
-			VoucherCode: i.VoucherCode,
-			VoucherID:   i.ID,
-			OrderID:     req.OrderID,
+			VoucherCode: voucher.VoucherCode,
+			VoucherID:   voucher.ID,
+			OrderID:     msg.OrderID,
 			Status:      1,
 			CreatedAt:   time.Now(),
 		}
 
-		err := sh.voucherRepos.CreateLogUseVoucher(ctx, &usingLog)
-		if err != nil {
-			log.Errorf("%v", err)
+		if err := sh.voucherRepos.CreateLogUseVoucher(ctx, &usingLog); err != nil {
+			// Log the error, but continue processing other vouchers
+			log.Errorf("Error creating voucher usage log: %v", err)
+			msgReply.Status = message.COMMIT_FAIL
 		}
-	}
-
-	resp := dto2.UseVoucherResponse{}
-	resp.IsSuccess = true
-	if err := mapper.BindingStruct(vouchers, &resp.Items); err != nil {
-		return err
 	}
 
 	return nil
