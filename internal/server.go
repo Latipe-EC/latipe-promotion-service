@@ -54,7 +54,7 @@ func New() (*Server, error) {
 
 func NewServer(
 	cfg *config.Config,
-	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
+	voucherGrpc vouchergrpc.VoucherServiceServer,
 	voucherRouter router.VoucherRouter,
 	grpcInterceptor *interceptor.GrpcInterceptor,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
@@ -90,7 +90,7 @@ func NewServer(
 
 	//init grpc
 	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
-	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
+	vouchergrpc.RegisterVoucherServiceServer(grpcServ, voucherGrpc)
 
 	return &Server{
 		cfg:                  cfg,

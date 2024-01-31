@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "vouchergrpc/";
 
 
-service VoucherServiceGRPC {
+service VoucherService {
   rpc CheckingVoucher(CheckingVoucherRequest) returns (CheckingVoucherResponse){}
   rpc ApplyVoucher(UseVoucherRequest) returns(ApplyVoucherResponse){}
 }

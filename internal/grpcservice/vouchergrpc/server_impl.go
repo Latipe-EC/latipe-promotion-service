@@ -14,10 +14,10 @@ import (
 
 type voucherServer struct {
 	voucherService *voucherserv.VoucherService
-	UnimplementedVoucherServiceGRPCServer
+	UnimplementedVoucherServiceServer
 }
 
-func NewVoucherServerGRPC(voucherServ *voucherserv.VoucherService) VoucherServiceGRPCServer {
+func NewVoucherServerGRPC(voucherServ *voucherserv.VoucherService) VoucherServiceServer {
 	return &voucherServer{
 		voucherService: voucherServ,
 	}

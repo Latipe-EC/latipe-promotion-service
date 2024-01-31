@@ -18,122 +18,122 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// VoucherServiceGRPCClient is the client API for VoucherServiceGRPC service.
+// VoucherServiceClient is the client API for VoucherService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type VoucherServiceGRPCClient interface {
+type VoucherServiceClient interface {
 	CheckingVoucher(ctx context.Context, in *CheckingVoucherRequest, opts ...grpc.CallOption) (*CheckingVoucherResponse, error)
 	ApplyVoucher(ctx context.Context, in *UseVoucherRequest, opts ...grpc.CallOption) (*ApplyVoucherResponse, error)
 }
 
-type voucherServiceGRPCClient struct {
+type voucherServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewVoucherServiceGRPCClient(cc grpc.ClientConnInterface) VoucherServiceGRPCClient {
-	return &voucherServiceGRPCClient{cc}
+func NewVoucherServiceClient(cc grpc.ClientConnInterface) VoucherServiceClient {
+	return &voucherServiceClient{cc}
 }
 
-func (c *voucherServiceGRPCClient) CheckingVoucher(ctx context.Context, in *CheckingVoucherRequest, opts ...grpc.CallOption) (*CheckingVoucherResponse, error) {
+func (c *voucherServiceClient) CheckingVoucher(ctx context.Context, in *CheckingVoucherRequest, opts ...grpc.CallOption) (*CheckingVoucherResponse, error) {
 	out := new(CheckingVoucherResponse)
-	err := c.cc.Invoke(ctx, "/VoucherServiceGRPC/CheckingVoucher", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/VoucherService/CheckingVoucher", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *voucherServiceGRPCClient) ApplyVoucher(ctx context.Context, in *UseVoucherRequest, opts ...grpc.CallOption) (*ApplyVoucherResponse, error) {
+func (c *voucherServiceClient) ApplyVoucher(ctx context.Context, in *UseVoucherRequest, opts ...grpc.CallOption) (*ApplyVoucherResponse, error) {
 	out := new(ApplyVoucherResponse)
-	err := c.cc.Invoke(ctx, "/VoucherServiceGRPC/ApplyVoucher", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/VoucherService/ApplyVoucher", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// VoucherServiceGRPCServer is the server API for VoucherServiceGRPC service.
-// All implementations must embed UnimplementedVoucherServiceGRPCServer
+// VoucherServiceServer is the server API for VoucherService service.
+// All implementations must embed UnimplementedVoucherServiceServer
 // for forward compatibility
-type VoucherServiceGRPCServer interface {
+type VoucherServiceServer interface {
 	CheckingVoucher(context.Context, *CheckingVoucherRequest) (*CheckingVoucherResponse, error)
 	ApplyVoucher(context.Context, *UseVoucherRequest) (*ApplyVoucherResponse, error)
-	mustEmbedUnimplementedVoucherServiceGRPCServer()
+	mustEmbedUnimplementedVoucherServiceServer()
 }
 
-// UnimplementedVoucherServiceGRPCServer must be embedded to have forward compatible implementations.
-type UnimplementedVoucherServiceGRPCServer struct {
+// UnimplementedVoucherServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedVoucherServiceServer struct {
 }
 
-func (UnimplementedVoucherServiceGRPCServer) CheckingVoucher(context.Context, *CheckingVoucherRequest) (*CheckingVoucherResponse, error) {
+func (UnimplementedVoucherServiceServer) CheckingVoucher(context.Context, *CheckingVoucherRequest) (*CheckingVoucherResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckingVoucher not implemented")
 }
-func (UnimplementedVoucherServiceGRPCServer) ApplyVoucher(context.Context, *UseVoucherRequest) (*ApplyVoucherResponse, error) {
+func (UnimplementedVoucherServiceServer) ApplyVoucher(context.Context, *UseVoucherRequest) (*ApplyVoucherResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ApplyVoucher not implemented")
 }
-func (UnimplementedVoucherServiceGRPCServer) mustEmbedUnimplementedVoucherServiceGRPCServer() {}
+func (UnimplementedVoucherServiceServer) mustEmbedUnimplementedVoucherServiceServer() {}
 
-// UnsafeVoucherServiceGRPCServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to VoucherServiceGRPCServer will
+// UnsafeVoucherServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to VoucherServiceServer will
 // result in compilation errors.
-type UnsafeVoucherServiceGRPCServer interface {
-	mustEmbedUnimplementedVoucherServiceGRPCServer()
+type UnsafeVoucherServiceServer interface {
+	mustEmbedUnimplementedVoucherServiceServer()
 }
 
-func RegisterVoucherServiceGRPCServer(s grpc.ServiceRegistrar, srv VoucherServiceGRPCServer) {
-	s.RegisterService(&VoucherServiceGRPC_ServiceDesc, srv)
+func RegisterVoucherServiceServer(s grpc.ServiceRegistrar, srv VoucherServiceServer) {
+	s.RegisterService(&VoucherService_ServiceDesc, srv)
 }
 
-func _VoucherServiceGRPC_CheckingVoucher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _VoucherService_CheckingVoucher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckingVoucherRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VoucherServiceGRPCServer).CheckingVoucher(ctx, in)
+		return srv.(VoucherServiceServer).CheckingVoucher(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/VoucherServiceGRPC/CheckingVoucher",
+		FullMethod: "/VoucherService/CheckingVoucher",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VoucherServiceGRPCServer).CheckingVoucher(ctx, req.(*CheckingVoucherRequest))
+		return srv.(VoucherServiceServer).CheckingVoucher(ctx, req.(*CheckingVoucherRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VoucherServiceGRPC_ApplyVoucher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _VoucherService_ApplyVoucher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UseVoucherRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VoucherServiceGRPCServer).ApplyVoucher(ctx, in)
+		return srv.(VoucherServiceServer).ApplyVoucher(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/VoucherServiceGRPC/ApplyVoucher",
+		FullMethod: "/VoucherService/ApplyVoucher",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VoucherServiceGRPCServer).ApplyVoucher(ctx, req.(*UseVoucherRequest))
+		return srv.(VoucherServiceServer).ApplyVoucher(ctx, req.(*UseVoucherRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// VoucherServiceGRPC_ServiceDesc is the grpc.ServiceDesc for VoucherServiceGRPC service.
+// VoucherService_ServiceDesc is the grpc.ServiceDesc for VoucherService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var VoucherServiceGRPC_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "VoucherServiceGRPC",
-	HandlerType: (*VoucherServiceGRPCServer)(nil),
+var VoucherService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "VoucherService",
+	HandlerType: (*VoucherServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CheckingVoucher",
-			Handler:    _VoucherServiceGRPC_CheckingVoucher_Handler,
+			Handler:    _VoucherService_CheckingVoucher_Handler,
 		},
 		{
 			MethodName: "ApplyVoucher",
-			Handler:    _VoucherServiceGRPC_ApplyVoucher_Handler,
+			Handler:    _VoucherService_ApplyVoucher_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

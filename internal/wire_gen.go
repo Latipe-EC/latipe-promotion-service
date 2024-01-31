@@ -40,7 +40,7 @@ func New() (*Server, error) {
 	}
 	voucherRepository := repos.NewVoucherRepos(mongoClient)
 	voucherService := voucherserv.NewVoucherService(voucherRepository)
-	voucherServiceGRPCServer := vouchergrpc.NewVoucherServerGRPC(voucherService)
+	voucherServiceServer := vouchergrpc.NewVoucherServerGRPC(voucherService)
 	voucherHandle := api.NewVoucherHandler(voucherService)
 	userService := userserv.NewUserService(configConfig)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
@@ -49,7 +49,7 @@ func New() (*Server, error) {
 	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	purchaseCreateSubscriber := createPurchase.NewPurchaseCreateSubscriber(configConfig, voucherService, connection)
 	purchaseRollbackSubscriber := createPurchase.NewPurchaseRollbackSubscriber(configConfig, voucherService, connection)
-	server := NewServer(configConfig, voucherServiceGRPCServer, voucherRouter, grpcInterceptor, purchaseCreateSubscriber, purchaseRollbackSubscriber)
+	server := NewServer(configConfig, voucherServiceServer, voucherRouter, grpcInterceptor, purchaseCreateSubscriber, purchaseRollbackSubscriber)
 	return server, nil
 }
 
@@ -65,7 +65,7 @@ type Server struct {
 
 func NewServer(
 	cfg *config.Config,
-	voucherGrpc vouchergrpc.VoucherServiceGRPCServer,
+	voucherGrpc vouchergrpc.VoucherServiceServer,
 	voucherRouter router.VoucherRouter,
 	grpcInterceptor *interceptor.GrpcInterceptor,
 	purchaseSubs *createPurchase.PurchaseCreateSubscriber,
@@ -100,7 +100,7 @@ func NewServer(
 	voucherRouter.Init(&v1)
 
 	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
-	vouchergrpc.RegisterVoucherServiceGRPCServer(grpcServ, voucherGrpc)
+	vouchergrpc.RegisterVoucherServiceServer(grpcServ, voucherGrpc)
 
 	return &Server{
 		cfg:                  cfg,
