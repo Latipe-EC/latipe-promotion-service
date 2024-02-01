@@ -47,7 +47,7 @@ func (orch PurchaseCreateSubscriber) ListenProductPurchaseCreate(wg *sync.WaitGr
 
 	// create queue
 	q, err := channel.QueueDeclare(
-		"",
+		"purchase_promotion_commit",
 		true,
 		false,
 		false,

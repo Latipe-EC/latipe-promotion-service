@@ -47,7 +47,7 @@ func (orch PurchaseRollbackSubscriber) ListenProductPurchaseCreate(wg *sync.Wait
 
 	// create queue
 	q, err := channel.QueueDeclare(
-		"",
+		"purchase_promotion_rollback",
 		true,
 		false,
 		false,
