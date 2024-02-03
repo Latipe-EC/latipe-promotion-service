@@ -90,4 +90,10 @@ var (
 		ErrorCode: "GE014",
 		Message:   "The order does not meet the requirements for using voucher",
 	}
+
+	ErrInvalidVoucherData = &Error{
+		Code:      400,
+		ErrorCode: "GE015",
+		Message:   "The order does not meet the requirements for using voucher",
+	}
 )

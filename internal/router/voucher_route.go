@@ -24,13 +24,28 @@ func NewVoucherRouter(voucherHandler *api.VoucherHandle, middleware *middleware.
 
 func (o voucherRouter) Init(root *fiber.Router) {
 	voucher := (*root).Group("/vouchers")
-	voucher.Post("", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.CreateNewVoucher)
-	voucher.Get("", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.FindAll)
-	voucher.Get("/user/foryou", o.voucherHandler.FindVoucherForUser)
-	voucher.Get("/:id", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.GetById)
-	voucher.Patch("code/:code", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.UpdateStatusVoucher)
-	voucher.Get("/code/:code", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.GetByCode)
-	voucher.Post("/apply", o.middleware.RequiredAuthentication(), o.voucherHandler.UseVoucher)
-	voucher.Post("/rollback", o.middleware.RequiredAuthentication(), o.voucherHandler.UseVoucher)
+	admin := voucher.Group("/admin")
+	{
+		admin.Get("", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.FindAll)
+		admin.Post("", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.CreateNewVoucher)
+		admin.Get("/:id", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.GetById)
+		admin.Get("/code/:code", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.GetByCode)
+		admin.Patch("code/:code", o.middleware.RequiredRoles([]string{"ADMIN"}), o.voucherHandler.UpdateStatusVoucher)
+	}
+
+	user := voucher.Group("/user", o.middleware.RequiredAuthentication())
+	{
+		user.Get("/foryou", o.voucherHandler.FindVoucherForUser)
+		user.Get("/code/:code", o.voucherHandler.GetByCode)
+	}
+
+	store := voucher.Group("/store")
+	{
+		store.Get("", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.GetAllVoucherForStore)
+		store.Post("", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.StoreCreateNewVoucher)
+		store.Get("/code/:code", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.GetByCode)
+		store.Patch("/cancel", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.StoreCancelStatusVoucher)
+	}
+
 	voucher.Post("/checking", o.middleware.RequiredAuthentication(), o.voucherHandler.CheckingVoucher)
 }

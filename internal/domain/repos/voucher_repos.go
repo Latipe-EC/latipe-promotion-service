@@ -209,3 +209,43 @@ func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, vouchers []
 
 	return nil
 }
+
+func (dr VoucherRepository) GetVoucherOfStore(ctx context.Context, storeId string, voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
+	var delis []entities.Voucher
+
+	filter, err := query.ConvertQueryToFilter()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	filter["owner_voucher"] = storeId
+
+	if voucherCode != "" {
+		filter["$text"] = bson.M{"$search": voucherCode}
+	}
+
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetOffset()))
+	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if err = cursor.All(ctx, &delis); err != nil {
+		return nil, 0, err
+	}
+
+	total, err := dr.voucherCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	return delis, int(total), err
+}
+
+func (dr VoucherRepository) CheckUsableVoucherOfUser(ctx context.Context, userId string, voucherCode string) (int, error) {
+	filter := bson.M{"user_id": userId, "voucher_code": voucherCode}
+	count, err := dr.voucherLogsCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return int(count), nil
+}

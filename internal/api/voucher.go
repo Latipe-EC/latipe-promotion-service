@@ -1,13 +1,16 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"go.mongodb.org/mongo-driver/mongo"
-	dto2 "latipe-promotion-services/internal/domain/dto"
+	dto "latipe-promotion-services/internal/domain/dto"
+	"latipe-promotion-services/internal/middleware"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/pkgs/pagable"
-	responses2 "latipe-promotion-services/pkgs/response"
+	responses "latipe-promotion-services/pkgs/response"
 	"latipe-promotion-services/pkgs/valid"
 	"net/http"
 )
@@ -23,11 +26,11 @@ func NewVoucherHandler(service *voucherserv.VoucherService) *VoucherHandle {
 }
 
 func (api VoucherHandle) CreateNewVoucher(ctx *fiber.Ctx) error {
-	var request dto2.CreateVoucherRequest
+	var request dto.CreateVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -36,7 +39,7 @@ func (api VoucherHandle) CreateNewVoucher(ctx *fiber.Ctx) error {
 
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -46,33 +49,32 @@ func (api VoucherHandle) CreateNewVoucher(ctx *fiber.Ctx) error {
 	dataResp, err := api.service.CreateVoucher(ctx.Context(), &request)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return responses2.ErrExistVoucherCode
+			return responses.ErrExistVoucherCode
 		}
-		return responses2.ErrInternalServer
+		if errors.Is(err, responses.ErrInvalidVoucherData) {
+			return responses.ErrInvalidVoucherData
+		}
+		return responses.ErrInternalServer
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Message = "the voucher was created"
 	resp.Data = dataResp
 
 	return resp.JSON(ctx)
 }
 
-func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
-	var request dto2.UpdateVoucherRequest
+func (api VoucherHandle) StoreCreateNewVoucher(ctx *fiber.Ctx) error {
+	var request dto.CreateVoucherRequest
 
-	if err := ctx.ParamsParser(&request); err != nil {
-		log.Errorf("%v", err)
-		resp := responses2.DefaultError
-		resp.Message = err.Error()
-		resp.Code = http.StatusBadRequest
-
-		return resp.JSON(ctx)
+	storeId := fmt.Sprintf("%s", ctx.Locals(middleware.STORE_ID))
+	if storeId == "" {
+		return responses.ErrUnauthenticated
 	}
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -81,7 +83,56 @@ func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
 
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	request.StoreID = storeId
+	dataResp, err := api.service.CreateVoucher(ctx.Context(), &request)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return responses.ErrExistVoucherCode
+		}
+		if errors.Is(err, responses.ErrInvalidVoucherData) {
+			return responses.ErrInvalidVoucherData
+		}
+		return responses.ErrInternalServer
+	}
+
+	resp := responses.DefaultSuccess
+	resp.Message = "the voucher was created"
+	resp.Data = dataResp
+
+	return resp.JSON(ctx)
+}
+
+func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
+	var request dto.UpdateVoucherRequest
+
+	if err := ctx.ParamsParser(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	if err := ctx.BodyParser(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	if err := valid.GetValidator().Validate(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -91,23 +142,23 @@ func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
 	err := api.service.UpdateVoucherStatus(ctx.Context(), &request)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return responses2.ErrNotFound
+			return responses.ErrNotFound
 		}
 
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Message = "the voucher was updated"
 
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) GetById(ctx *fiber.Ctx) error {
-	var request dto2.GetVoucherByIdRequest
+	var request dto.GetVoucherByIdRequest
 
 	if err := ctx.ParamsParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -119,23 +170,23 @@ func (api VoucherHandle) GetById(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		default:
-			return responses2.ErrInternalServer
+			return responses.ErrInternalServer
 		}
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) GetByCode(ctx *fiber.Ctx) error {
-	var request dto2.GetVoucherByCodeRequest
+	var request dto.GetVoucherByCodeRequest
 
 	if err := ctx.ParamsParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -147,23 +198,23 @@ func (api VoucherHandle) GetByCode(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		default:
-			return responses2.ErrInternalServer
+			return responses.ErrInternalServer
 		}
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
-	var request dto2.UseVoucherRequest
+	var request dto.UseVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -172,7 +223,7 @@ func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
 
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -183,23 +234,23 @@ func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Errorf("%v", err)
 		switch {
-		case responses2.Is(err, mongo.ErrNoDocuments):
-			return responses2.ErrNotFoundRecord
+		case responses.Is(err, mongo.ErrNoDocuments):
+			return responses.ErrNotFoundRecord
 		}
 
 		return err
 	}
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
-	var request dto2.CheckingVoucherRequest
+	var request dto.CheckingVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -208,7 +259,7 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -220,21 +271,21 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		}
 		return err
 	}
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) RollBack(ctx *fiber.Ctx) error {
-	var request dto2.UseVoucherRequest
+	var request dto.UseVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -243,7 +294,7 @@ func (api VoucherHandle) RollBack(ctx *fiber.Ctx) error {
 
 	if err := valid.GetValidator().Validate(request); err != nil {
 		log.Errorf("%v", err)
-		resp := responses2.DefaultError
+		resp := responses.DefaultError
 		resp.Message = err.Error()
 		resp.Code = http.StatusBadRequest
 
@@ -255,15 +306,15 @@ func (api VoucherHandle) RollBack(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		default:
-			return responses2.ErrInternalServer
+			return responses.ErrInternalServer
 		}
 	}
 	dataResp := make(map[string]interface{})
 	dataResp["status"] = "success"
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
@@ -273,9 +324,9 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 
 	query, err := pagable.GetQueryFromFiberCtx(ctx)
 	if err != nil {
-		return responses2.ErrInvalidParameters
+		return responses.ErrInvalidParameters
 	}
-	request := dto2.GetVoucherListRequest{
+	request := dto.GetVoucherListRequest{
 		Query: query,
 	}
 	search := ctx.Query("search")
@@ -285,13 +336,13 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		default:
-			return responses2.ErrInternalServer
+			return responses.ErrInternalServer
 		}
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
@@ -299,28 +350,102 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 func (api VoucherHandle) FindVoucherForUser(ctx *fiber.Ctx) error {
 	context := ctx.Context()
 
+	userId := fmt.Sprintf("%s", ctx.Locals("user_id"))
+	if userId == "" {
+		return responses.ErrUnauthenticated
+	}
+
 	query, err := pagable.GetQueryFromFiberCtx(ctx)
 	if err != nil {
-		return responses2.ErrInvalidParameters
+		return responses.ErrInvalidParameters
 	}
-	request := dto2.GetVoucherListRequest{
+	request := dto.GetVoucherListRequest{
 		Query: query,
 	}
 
 	voucherCode := ctx.Query("search")
 
-	dataResp, err := api.service.GetUserVoucher(context, voucherCode, request.Query)
+	dataResp, err := api.service.GetUserVoucher(context, voucherCode, userId, request.Query)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
-			return responses2.ErrNotFoundRecord
+			return responses.ErrNotFoundRecord
 		default:
-			return responses2.ErrInternalServer
+			return responses.ErrInternalServer
 		}
 	}
 
-	resp := responses2.DefaultSuccess
+	resp := responses.DefaultSuccess
 	resp.Data = dataResp
+	return resp.JSON(ctx)
+}
+
+func (api VoucherHandle) GetAllVoucherForStore(ctx *fiber.Ctx) error {
+	context := ctx.Context()
+
+	storeId := fmt.Sprintf("%s", ctx.Locals(middleware.STORE_ID))
+	if storeId == "" {
+		return responses.ErrUnauthenticated
+	}
+
+	query, err := pagable.GetQueryFromFiberCtx(ctx)
+	if err != nil {
+		return responses.ErrInvalidParameters
+	}
+	request := dto.GetVoucherListRequest{
+		Query: query,
+	}
+
+	voucherCode := ctx.Query("search")
+
+	dataResp, err := api.service.GetAllVoucherOfStore(context, voucherCode, storeId, request.Query)
+	if err != nil {
+		log.Errorf("%v", err)
+		switch err {
+		case mongo.ErrNoDocuments:
+			return responses.ErrNotFoundRecord
+		default:
+			return responses.ErrInternalServer
+		}
+	}
+
+	resp := responses.DefaultSuccess
+	resp.Data = dataResp
+	return resp.JSON(ctx)
+}
+
+func (api VoucherHandle) StoreCancelStatusVoucher(ctx *fiber.Ctx) error {
+	var request dto.CancelUpdateVoucherRequest
+
+	if err := ctx.BodyParser(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	if err := valid.GetValidator().Validate(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	err := api.service.StoreCancelVoucher(ctx.Context(), &request)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return responses.ErrNotFound
+		}
+
+	}
+
+	resp := responses.DefaultSuccess
+	resp.Message = "the voucher was updated"
+
 	return resp.JSON(ctx)
 }

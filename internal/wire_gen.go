@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"google.golang.org/grpc"
 	"latipe-promotion-services/config"
+	"latipe-promotion-services/internal/adapter/storeserv"
 	"latipe-promotion-services/internal/adapter/userserv"
 	"latipe-promotion-services/internal/api"
 	"latipe-promotion-services/internal/domain/repos"
@@ -46,7 +47,8 @@ func New() (*Server, error) {
 	voucherServiceServer := vouchergrpc.NewVoucherServerGRPC(voucherService)
 	voucherHandle := api.NewVoucherHandler(voucherService)
 	userService := userserv.NewUserService(configConfig)
-	authMiddleware := middleware.NewAuthMiddleware(userService)
+	storeService := storeserv.NewStoreServiceAdapter(configConfig)
+	authMiddleware := middleware.NewAuthMiddleware(userService, storeService)
 	voucherRouter := router.NewVoucherRouter(voucherHandle, authMiddleware)
 	grpcInterceptor := interceptor.NewGrpcInterceptor(configConfig)
 	purchaseCreateSubscriber := createPurchase.NewPurchaseCreateSubscriber(configConfig, voucherService, connection)

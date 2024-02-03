@@ -45,3 +45,6 @@ AdapterService:
     AuthURL: http://localhost:8081
     UserURL: http://localhost:8181
     InternalKey:
+  StoreService:
+    BaseURL: http://localhost:8118
+    InternalKey:

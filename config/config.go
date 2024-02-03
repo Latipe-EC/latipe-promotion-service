@@ -77,6 +77,7 @@ type EmailEvent struct {
 type AdapterService struct {
 	UserService  UserService
 	EmailService EmailService
+	StoreService StoreService
 }
 
 type UserService struct {
@@ -86,6 +87,11 @@ type UserService struct {
 }
 
 type ProductService struct {
+	BaseURL     string
+	InternalKey string
+}
+
+type StoreService struct {
 	BaseURL     string
 	InternalKey string
 }
