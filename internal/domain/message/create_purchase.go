@@ -6,10 +6,19 @@ const (
 )
 
 type CreatePurchaseMessage struct {
-	OrderID       string   `json:"order_id" validate:"required"`
-	PaymentMethod int      `json:"payment_method"`
-	Amount        int      `json:"amount"`
-	Vouchers      []string `json:"vouchers" validate:"required"`
+	UserId       string          `json:"user_id"`
+	CheckoutData CheckoutRequest `json:"checkout_data"`
+	Vouchers     []string        `json:"vouchers"`
+}
+
+type CheckoutRequest struct {
+	CheckoutID string      `json:"checkout_id"`
+	OrderData  []OrderData `json:"order_data"`
+}
+
+type OrderData struct {
+	OrderID string `json:"order_id"`
+	StoreID string `json:"store_id"`
 }
 
 type RollbackPurchaseMessage struct {

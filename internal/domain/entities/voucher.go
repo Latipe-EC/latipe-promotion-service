@@ -54,11 +54,16 @@ type DiscountData struct {
 }
 
 type VoucherUsingLog struct {
-	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-	VoucherCode string             `json:"voucher_code" bson:"voucher_code"`
-	VoucherID   primitive.ObjectID `json:"voucher_type" bson:"voucher_type"`
-	UserID      string             `json:"user_id" bson:"user_id"`
-	OrderID     string             `json:"order_id"  bson:"order_id"`
-	Status      int                `json:"status" bson:"status"`
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
+	ID               primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	VoucherCode      string             `json:"voucher_code" bson:"voucher_code"`
+	VoucherID        primitive.ObjectID `json:"voucher_type" bson:"voucher_type"`
+	UserID           string             `json:"user_id" bson:"user_id"`
+	CheckoutPurchase CheckoutPurchase   `json:"checkout_purchase" bson:"checkout_purchase"`
+	Status           int                `json:"status" bson:"status"`
+	CreatedAt        time.Time          `json:"created_at" bson:"created_at"`
+}
+
+type CheckoutPurchase struct {
+	CheckoutID string   `json:"checkout_id"  bson:"checkout_id"`
+	OrderIDs   []string `json:"order_ids" bson:"order_ids"`
 }

@@ -161,7 +161,7 @@ func (dr VoucherRepository) CreateVoucher(ctx context.Context, voucher *entities
 	return lastId.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
-func (dr VoucherRepository) CreateLogUseVoucher(ctx context.Context, voucher *entities.VoucherUsingLog) error {
+func (dr VoucherRepository) CreateUsingVoucherLog(ctx context.Context, voucher *entities.VoucherUsingLog) error {
 	voucher.CreatedAt = time.Now()
 
 	_, err := dr.voucherLogsCollection.InsertOne(ctx, voucher)
@@ -191,26 +191,27 @@ func (dr VoucherRepository) UpdateStatus(ctx context.Context, voucher *entities.
 	return nil
 }
 
-func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, vouchers []*entities.Voucher) error {
-	for _, i := range vouchers {
-		update := bson.D{
-			{"$set", bson.D{
-				{"voucher_counts", i.VoucherCounts},
-			}},
-		}
-		data, err := dr.voucherCollection.UpdateByID(ctx, i.ID, update)
-		if err != nil {
-			return err
-		}
-		if data.ModifiedCount == 0 {
-			return errors.New("not change")
-		}
+func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, vouchers *entities.Voucher) error {
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"voucher_counts", vouchers.VoucherCounts},
+		}},
+	}
+	data, err := dr.voucherCollection.UpdateByID(ctx, vouchers.ID, update)
+	if err != nil {
+		return err
+	}
+
+	if data.ModifiedCount == 0 {
+		return errors.New("not change")
 	}
 
 	return nil
 }
 
-func (dr VoucherRepository) GetVoucherOfStore(ctx context.Context, storeId string, voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
+func (dr VoucherRepository) GetVoucherOfStore(ctx context.Context, storeId string,
+	voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
 	var delis []entities.Voucher
 
 	filter, err := query.ConvertQueryToFilter()

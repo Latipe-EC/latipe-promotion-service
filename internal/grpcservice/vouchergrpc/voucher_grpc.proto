@@ -6,51 +6,80 @@ option go_package = "vouchergrpc/";
 
 
 service VoucherService {
-  rpc CheckingVoucher(CheckingVoucherRequest) returns (CheckingVoucherResponse){}
-  rpc ApplyVoucher(UseVoucherRequest) returns(ApplyVoucherResponse){}
+  rpc CheckUsingVouchersForCheckout(CheckoutVoucherRequest) returns (CheckoutVoucherResponse){}
+  rpc ApplyVoucherToPurchase(ApplyVoucherRequest) returns(ApplyVoucherResponse){}
 }
 
-message UseVoucherRequest {
-  string order_id = 1;
-  repeated string vouchers = 2;
+message CheckoutVoucherRequest {
+  int32 order_total_amount = 1;
+  int32 payment_method = 2;
+  FreeShippingVoucher free_shipping_voucher = 3;
+  PaymentVoucher payment_voucher = 4;
+  repeated ShopVoucher shop_vouchers = 5;
+  string user_id = 6;
 }
 
-message VoucherRespDetail {
+message CheckoutVoucherResponse {
+  repeated VoucherDetail store_vouchers = 1;
+  VoucherDetail shipping_voucher = 2;
+  VoucherDetail payment_voucher = 3;
+}
+
+message FreeShippingVoucher {
+  string voucher_code = 1;
+}
+
+message PaymentVoucher {
+  string voucher_code = 1;
+}
+
+message ShopVoucher {
+  string store_id = 1;
+  int32 sub_total = 2;
+  string voucher_code = 3;
+}
+
+message VoucherDetail {
   string id = 1;
   string voucher_code = 2;
   int32 voucher_type = 3;
   int32 voucher_counts = 4;
   string detail = 5;
   string owner_voucher = 6;
-  double discount_percent = 7;
-  int64 discount_value = 8;
-  VoucherReqResp voucher_require = 9;
-  google.protobuf.Timestamp created_at = 10;
-  google.protobuf.Timestamp updated_at = 11;
-  google.protobuf.Timestamp stated_time = 12;
-  google.protobuf.Timestamp ended_time = 13;
-  int32 status = 14;
+  int32 status = 7;
+  CheckingDiscountData discount_data = 8;
+  CheckingVoucherRequire voucher_require = 9;
+  google.protobuf.Timestamp stated_time = 10;
+  google.protobuf.Timestamp ended_time = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
 }
 
-message VoucherReqResp {
+message CheckingVoucherRequire {
   int64 min_require = 1;
-  int32 member_type = 2;
-  int32 payment_method = 3;
-  string required_owner_prod_id = 4;
+  int32 payment_method = 2;
+  int32 max_voucher_per_user = 3;
 }
 
-message CheckingVoucherResponse {
-  bool is_success = 1;
-  repeated VoucherRespDetail items = 2;
+message CheckingDiscountData {
+  int32 discount_type = 1;
+  uint32 shipping_value = 2;
+  uint32 discount_value = 3;
+  float discount_percent = 4;
+  uint32 maximum_value = 5;
+}
+
+message ApplyVoucherRequest {
+  string user_id = 1;
+  CheckoutRequest checkout_data = 2;
+  repeated string vouchers = 3;
+}
+
+message CheckoutRequest {
+  string checkout_id = 1;
+  repeated string order_ids = 2;
 }
 
 message ApplyVoucherResponse {
   bool is_success = 1;
-}
-
-message CheckingVoucherRequest {
-  repeated string vouchers = 1;
-  int64 order_total_amount = 2;
-  int32 payment_method = 3;
-  string user_id = 4;
 }

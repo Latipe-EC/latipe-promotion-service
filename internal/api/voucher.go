@@ -209,8 +209,8 @@ func (api VoucherHandle) GetByCode(ctx *fiber.Ctx) error {
 	return resp.JSON(ctx)
 }
 
-func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
-	var request dto.UseVoucherRequest
+func (api VoucherHandle) ApplyVoucher(ctx *fiber.Ctx) error {
+	var request dto.ApplyVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
@@ -230,7 +230,7 @@ func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
-	dataResp, err := api.service.UseVoucher(ctx.Context(), &request)
+	err := api.service.UsingVoucherToOrder(ctx.Context(), &request)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch {
@@ -241,12 +241,11 @@ func (api VoucherHandle) UseVoucher(ctx *fiber.Ctx) error {
 		return err
 	}
 	resp := responses.DefaultSuccess
-	resp.Data = dataResp
 	return resp.JSON(ctx)
 }
 
 func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
-	var request dto.CheckingVoucherRequest
+	var request dto.PurchaseVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)
@@ -257,6 +256,12 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
+	userId := fmt.Sprintf("%s", ctx.Locals("user_id"))
+	if userId == "" {
+		return responses.ErrUnauthenticated
+	}
+
+	request.UserId = userId
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
 		resp := responses.DefaultError
@@ -266,7 +271,7 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
-	dataResp, err := api.service.CheckingVoucher(ctx.Context(), &request)
+	dataResp, err := api.service.CheckoutVoucher(ctx.Context(), &request)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {
@@ -281,7 +286,7 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 }
 
 func (api VoucherHandle) RollBack(ctx *fiber.Ctx) error {
-	var request dto.UseVoucherRequest
+	var request dto.RollbackVoucherRequest
 
 	if err := ctx.BodyParser(&request); err != nil {
 		log.Errorf("%v", err)

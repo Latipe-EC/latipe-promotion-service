@@ -107,13 +107,13 @@ func (orch PurchaseCreateSubscriber) handleMessage(msg *amqp.Delivery) error {
 		return err
 	}
 
-	err := orch.voucherServ.UseVoucherTransaction(ctx, &messageDTO)
+	err := orch.voucherServ.CommitVoucherTransaction(ctx, &messageDTO)
 	if err != nil {
 		log.Infof("Handling message was failed cause: %s", err)
 		return err
 	}
 
 	endTime := time.Now()
-	log.Infof("The message [%v]  was processed successfully - duration:%v", messageDTO.OrderID, endTime.Sub(startTime))
+	log.Infof("The message [%v]  was processed successfully - duration:%v", messageDTO.CheckoutData.CheckoutID, endTime.Sub(startTime))
 	return nil
 }

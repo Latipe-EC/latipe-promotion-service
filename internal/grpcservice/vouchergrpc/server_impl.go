@@ -2,6 +2,7 @@ package vouchergrpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2/log"
 	"google.golang.org/grpc/codes"
@@ -9,6 +10,7 @@ import (
 	"latipe-promotion-services/internal/domain/dto"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/pkgs/mapper"
+	responses "latipe-promotion-services/pkgs/response"
 	"latipe-promotion-services/pkgs/valid"
 )
 
@@ -23,9 +25,9 @@ func NewVoucherServerGRPC(voucherServ *voucherserv.VoucherService) VoucherServic
 	}
 }
 
-func (v voucherServer) CheckingVoucher(ctx context.Context, request *CheckingVoucherRequest) (*CheckingVoucherResponse, error) {
-	req := dto.CheckingVoucherRequest{}
-	var response CheckingVoucherResponse
+func (v voucherServer) CheckUsingVouchersForCheckout(ctx context.Context, request *CheckoutVoucherRequest) (*CheckoutVoucherResponse, error) {
+	req := dto.PurchaseVoucherRequest{}
+	var response CheckoutVoucherResponse
 
 	if err := mapper.BindingStruct(request, &req); err != nil {
 		return nil, err
@@ -35,9 +37,17 @@ func (v voucherServer) CheckingVoucher(ctx context.Context, request *CheckingVou
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
 
-	resp, err := v.voucherService.CheckingVoucher(ctx, &req)
+	resp, err := v.voucherService.CheckoutVoucher(ctx, &req)
 	if err != nil {
 		log.Errorf("%v", err)
+		if errors.Is(err, responses.ErrUnableApplyVoucher) {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
+		}
+
+		if errors.Is(err, responses.ErrVoucherExpiredOrOutOfStock) {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
+		}
+
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%v", err))
 	}
 
@@ -49,8 +59,8 @@ func (v voucherServer) CheckingVoucher(ctx context.Context, request *CheckingVou
 	return &response, nil
 }
 
-func (v voucherServer) ApplyVoucher(ctx context.Context, request *UseVoucherRequest) (*ApplyVoucherResponse, error) {
-	req := dto.UseVoucherRequest{}
+func (v voucherServer) ApplyVoucherToPurchase(ctx context.Context, request *ApplyVoucherRequest) (*ApplyVoucherResponse, error) {
+	req := dto.ApplyVoucherRequest{}
 	response := ApplyVoucherResponse{}
 
 	if err := mapper.BindingStruct(request, &req); err != nil {
@@ -61,14 +71,21 @@ func (v voucherServer) ApplyVoucher(ctx context.Context, request *UseVoucherRequ
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
 
-	resp, err := v.voucherService.UseVoucher(ctx, &req)
+	err := v.voucherService.UsingVoucherToOrder(ctx, &req)
 	if err != nil {
+		log.Errorf("%v", err)
+		if errors.Is(err, responses.ErrUnableApplyVoucher) {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
+		}
+
+		if errors.Is(err, responses.ErrVoucherExpiredOrOutOfStock) {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%v", err))
+		}
+
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%v", err))
 	}
 
-	if err := mapper.BindingStruct(resp, &response); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("%v", err))
-	}
+	response.IsSuccess = true
 
 	return &response, nil
 }
