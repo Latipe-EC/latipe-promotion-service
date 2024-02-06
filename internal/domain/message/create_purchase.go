@@ -22,8 +22,8 @@ type OrderData struct {
 }
 
 type RollbackPurchaseMessage struct {
-	Status  int    `json:"status"`
-	OrderID string `json:"order_id"`
+	VoucherCodes []string `json:"voucher_codes"`
+	OrderID      string   `json:"order_id"`
 }
 
 type ReplyPurchaseMessage struct {

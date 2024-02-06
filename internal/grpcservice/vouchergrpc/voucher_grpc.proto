@@ -11,7 +11,7 @@ service VoucherService {
 }
 
 message CheckoutVoucherRequest {
-  int32 order_total_amount = 1;
+  int64 order_total_amount = 1;
   int32 payment_method = 2;
   FreeShippingVoucher free_shipping_voucher = 3;
   PaymentVoucher payment_voucher = 4;
@@ -35,7 +35,7 @@ message PaymentVoucher {
 
 message ShopVoucher {
   string store_id = 1;
-  int32 sub_total = 2;
+  int64 sub_total = 2;
   string voucher_code = 3;
 }
 
@@ -63,10 +63,10 @@ message CheckingVoucherRequire {
 
 message CheckingDiscountData {
   int32 discount_type = 1;
-  uint32 shipping_value = 2;
-  uint32 discount_value = 3;
+  uint64 shipping_value = 2;
+  uint64 discount_value = 3;
   float discount_percent = 4;
-  uint32 maximum_value = 5;
+  uint64 maximum_value = 5;
 }
 
 message ApplyVoucherRequest {

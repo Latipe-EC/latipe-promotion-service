@@ -167,6 +167,10 @@ func (sh VoucherService) CheckoutVoucher(ctx context.Context, req *dto.PurchaseV
 				return nil, err
 			}
 
+			if i.StoreId != voucher.OwnerVoucher {
+				return nil, responses.ErrUnableApplyVoucher
+			}
+
 			if err := sh.validateVoucherRequirement(ctx, req, voucher, i.SubTotal); err != nil {
 				return nil, err
 			}
@@ -201,7 +205,7 @@ func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto.RollbackV
 
 func (sh VoucherService) CommitVoucherTransaction(ctx context.Context, msg *message.CreatePurchaseMessage) error {
 	var msgReply []message.ReplyPurchaseMessage
-	var msgMap map[string]int
+	msgMap := make(map[string]int)
 	var orderIds []string
 
 	//// Initialize reply message
@@ -276,7 +280,7 @@ func (sh VoucherService) applyVoucherTransaction(ctx context.Context, voucher *e
 			CheckoutID: req.CheckoutData.CheckoutID,
 			OrderIDs:   order,
 		},
-		Status: 0,
+		Status: message.COMMIT_SUCCESS,
 	}
 
 	voucher.VoucherCounts-- //decrease voucher count

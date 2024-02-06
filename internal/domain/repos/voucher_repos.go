@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"latipe-promotion-services/internal/domain/entities"
+	"latipe-promotion-services/internal/domain/message"
 	"latipe-promotion-services/pkgs/mongodb"
 	"latipe-promotion-services/pkgs/pagable"
 	"strings"
@@ -161,10 +162,10 @@ func (dr VoucherRepository) CreateVoucher(ctx context.Context, voucher *entities
 	return lastId.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
-func (dr VoucherRepository) CreateUsingVoucherLog(ctx context.Context, voucher *entities.VoucherUsingLog) error {
-	voucher.CreatedAt = time.Now()
+func (dr VoucherRepository) CreateUsingVoucherLog(ctx context.Context, log *entities.VoucherUsingLog) error {
+	log.CreatedAt = time.Now()
 
-	_, err := dr.voucherLogsCollection.InsertOne(ctx, voucher)
+	_, err := dr.voucherLogsCollection.InsertOne(ctx, log)
 	if err != nil {
 		return err
 	}
@@ -243,7 +244,7 @@ func (dr VoucherRepository) GetVoucherOfStore(ctx context.Context, storeId strin
 }
 
 func (dr VoucherRepository) CheckUsableVoucherOfUser(ctx context.Context, userId string, voucherCode string) (int, error) {
-	filter := bson.M{"user_id": userId, "voucher_code": voucherCode}
+	filter := bson.M{"user_id": userId, "voucher_code": voucherCode, "status": message.COMMIT_SUCCESS}
 	count, err := dr.voucherLogsCollection.CountDocuments(ctx, filter)
 	if err != nil {
 		log.Fatal(err)

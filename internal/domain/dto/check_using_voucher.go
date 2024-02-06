@@ -20,6 +20,7 @@ type PaymentVoucher struct {
 }
 
 type ShopVoucher struct {
+	StoreId     string `json:"store_id"`
 	SubTotal    int    `json:"sub_total"`
 	VoucherCode string `json:"voucher_code"`
 }
