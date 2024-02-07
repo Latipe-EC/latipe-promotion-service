@@ -211,6 +211,25 @@ func (dr VoucherRepository) UpdateVoucherCounts(ctx context.Context, vouchers *e
 	return nil
 }
 
+func (dr VoucherRepository) UpdateUsingStatus(ctx context.Context, voucherLog *entities.VoucherUsingLog) error {
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"status", voucherLog.Status},
+		}},
+	}
+	data, err := dr.voucherLogsCollection.UpdateByID(ctx, voucherLog.ID, update)
+	if err != nil {
+		return err
+	}
+
+	if data.ModifiedCount == 0 {
+		return errors.New("not change")
+	}
+
+	return nil
+}
+
 func (dr VoucherRepository) GetVoucherOfStore(ctx context.Context, storeId string,
 	voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
 	var delis []entities.Voucher
@@ -250,4 +269,19 @@ func (dr VoucherRepository) CheckUsableVoucherOfUser(ctx context.Context, userId
 		log.Fatal(err)
 	}
 	return int(count), nil
+}
+
+func (dr VoucherRepository) FindVoucherLogByOrderID(ctx context.Context, orderId string) ([]*entities.VoucherUsingLog, error) {
+	var results []*entities.VoucherUsingLog
+	filter := bson.M{"checkout_purchase.order_ids": orderId}
+	cursor, err := dr.voucherLogsCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	return results, err
 }

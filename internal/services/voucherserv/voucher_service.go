@@ -297,6 +297,30 @@ func (sh VoucherService) applyVoucherTransaction(ctx context.Context, voucher *e
 }
 
 func (sh VoucherService) RollbackVoucherTransaction(ctx context.Context, req *message.RollbackPurchaseMessage) error {
+	voucherLogs, err := sh.voucherRepos.FindVoucherLogByOrderID(ctx, req.OrderID)
+	if err != nil {
+		return err
+	}
+
+	for _, i := range voucherLogs {
+		if len(i.CheckoutPurchase.OrderIDs) > 1 {
+			voucherDetail, err := sh.voucherRepos.GetById(ctx, i.VoucherID.String())
+			if err != nil {
+				return err
+			}
+
+			voucherDetail.VoucherCounts--
+			if err := sh.voucherRepos.UpdateVoucherCounts(ctx, voucherDetail); err != nil {
+				return err
+			}
+
+			i.Status = message.COMMIT_FAIL
+			if err := sh.voucherRepos.UpdateVoucherCounts(ctx, voucherDetail); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
