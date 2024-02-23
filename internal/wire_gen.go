@@ -10,7 +10,12 @@ import (
 	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
 	"latipe-promotion-services/config"
 	"latipe-promotion-services/internal/adapter/storeserv"
@@ -24,6 +29,7 @@ import (
 	"latipe-promotion-services/internal/router"
 	"latipe-promotion-services/internal/services/voucherserv"
 	"latipe-promotion-services/internal/subs/createPurchase"
+	"latipe-promotion-services/pkgs/healthcheck"
 	"latipe-promotion-services/pkgs/mongodb"
 	"latipe-promotion-services/pkgs/rabbitclient"
 	"latipe-promotion-services/pkgs/response"
@@ -83,8 +89,18 @@ func NewServer(
 		ErrorHandler: responses.CustomErrorHandler,
 	})
 
+	app.Use(logger.New())
+	api2 := app.Group("/api")
+	v1 := api2.Group("/v1")
+
+	basicAuthConfig := basicauth.Config{
+		Users: map[string]string{
+			cfg.Metrics.Username: cfg.Metrics.Password,
+		},
+	}
+
 	prometheus := fiberprometheus.New("promotion-services")
-	prometheus.RegisterAt(app, "/metrics")
+	prometheus.RegisterAt(app, cfg.Metrics.Host, basicauth.New(basicAuthConfig))
 	app.Use(prometheus.Middleware)
 	app.Use(logger.New())
 	app.Get("/", func(ctx *fiber.Ctx) error {
@@ -97,9 +113,22 @@ func NewServer(
 		}
 		return ctx.JSON(s)
 	})
-	app.Use(logger.New())
-	api2 := app.Group("/api")
-	v1 := api2.Group("/v1")
+
+	h, _ := healthService.NewHealthCheckService(cfg)
+	app.Get("/health", basicauth.New(basicAuthConfig), adaptor.HTTPHandlerFunc(h.HandlerFunc))
+	app.Use(healthcheck.New(healthcheck.Config{
+		LivenessProbe: func(c *fiber.Ctx) bool {
+			return true
+		},
+		LivenessEndpoint: "/liveness",
+		ReadinessProbe: func(c *fiber.Ctx) bool {
+			result := h.Measure(c.Context())
+			return result.Status == health.StatusOK
+		},
+		ReadinessEndpoint: "/readiness",
+	}))
+
+	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig), monitor.New(monitor.Config{Title: "Promotion Services Metrics Page (Fiber)"}))
 
 	voucherRouter.Init(&v1)
 

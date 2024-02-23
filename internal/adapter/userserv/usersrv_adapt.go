@@ -35,19 +35,19 @@ func (us UserService) GetAddressById(ctx context.Context, request *dto.GetAddres
 		Get(request.URL() + fmt.Sprintf("/%v", request.AddressId))
 
 	if err != nil {
-		log.Errorf("[%s] [Get address]: %s", "ERROR", err)
+		log.Errorf("[Get address]: %s", err)
 		return nil, err
 	}
 
 	if resp.StatusCode() >= 500 {
-		log.Errorf("[%s] [Get address]: %s", "ERROR", resp.Body())
+		log.Errorf("[Get address]: %s", resp.Body())
 		return nil, errors.New("get address internal")
 	}
 
 	var regResp *dto.GetAddressResponse
 	err = mapper.BindingStruct(resp.Body(), &regResp)
 	if err != nil {
-		log.Errorf("[%s] [Get product]: %s", "ERROR", err)
+		log.Errorf("[Get address]: %s", err)
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 		R().
 		SetBody(req).
 		SetContext(ctx).
-		SetDebug(false).
+		SetDebug(true).
 		Post(req.URL())
 
 	if err != nil {
@@ -70,7 +70,7 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 
 	if resp.StatusCode() >= 500 {
 		log.Errorf("[Authorize token]: %s", resp.Body())
-		return nil, err
+		return nil, errors.New("authorize token internal")
 	}
 
 	var regResp *dto.AuthorizationResponse

@@ -48,3 +48,10 @@ AdapterService:
   StoreService:
     BaseURL: http://localhost:8118
     InternalKey:
+
+
+Metrics:
+  Username: admin
+  Password: 123123
+  Host: /metrics
+  FiberDashboard: /fiber/dashboard

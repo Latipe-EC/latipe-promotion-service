@@ -17,6 +17,7 @@ type Config struct {
 	RabbitMQ       RabbitMQ
 	Mongodb        Mongodb
 	GRPC           GRPC
+	Metrics        Metrics
 }
 
 type Server struct {
@@ -100,6 +101,13 @@ type EmailService struct {
 	Email string
 	Host  string
 	Key   string
+}
+
+type Metrics struct {
+	Username       string
+	Password       string
+	Host           string
+	FiberDashboard string
 }
 
 // Get config path for local or docker

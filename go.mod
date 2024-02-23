@@ -6,12 +6,12 @@ require (
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/go-resty/resty/v2 v2.10.0
-	github.com/gofiber/fiber/v2 v2.51.0
+	github.com/gofiber/fiber/v2 v2.52.1
 	github.com/google/wire v0.5.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/mongo-driver v1.12.1
+	go.mongodb.org/mongo-driver v1.13.1
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 )
@@ -30,6 +30,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hellofresh/health-go/v5 v5.5.2 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -61,6 +62,8 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	go.opentelemetry.io/otel v1.21.0 // indirect
+	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
