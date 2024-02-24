@@ -49,3 +49,5 @@ func (o voucherRouter) Init(root *fiber.Router) {
 
 	voucher.Post("/checking", o.middleware.RequiredAuthentication(), o.voucherHandler.CheckingVoucher)
 }
+
+// help me to generate - **Voucher Management:**

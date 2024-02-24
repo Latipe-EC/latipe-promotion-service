@@ -8,6 +8,7 @@ require (
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/gofiber/fiber/v2 v2.52.1
 	github.com/google/wire v0.5.0
+	github.com/hellofresh/health-go/v5 v5.5.2
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
@@ -30,7 +31,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hellofresh/health-go/v5 v5.5.2 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

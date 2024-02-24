@@ -120,6 +120,23 @@ func NewServer(
 
 	//fiber dashboard
 	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig),
+		monitor.New(monitor.Config{Title: "Promotion Services Metrics Page (Fiber)"})) // Healthcheck
+	h, _ := healthService.NewHealthCheckService(cfg)
+	app.Get("/health", basicauth.New(basicAuthConfig), adaptor.HTTPHandlerFunc(h.HandlerFunc))
+	app.Use(healthcheck.New(healthcheck.Config{
+		LivenessProbe: func(c *fiber.Ctx) bool {
+			return true
+		},
+		LivenessEndpoint: "/liveness",
+		ReadinessProbe: func(c *fiber.Ctx) bool {
+			result := h.Measure(c.Context())
+			return result.Status == health.StatusOK
+		},
+		ReadinessEndpoint: "/readiness",
+	}))
+
+	//fiber dashboard
+	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig),
 		monitor.New(monitor.Config{Title: "Promotion Services Metrics Page (Fiber)"}))
 
 	voucherRouter.Init(&v1)
