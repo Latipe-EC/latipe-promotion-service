@@ -59,7 +59,7 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 		R().
 		SetBody(req).
 		SetContext(ctx).
-		SetDebug(true).
+		SetDebug(false).
 		Post(req.URL())
 
 	if err != nil {
