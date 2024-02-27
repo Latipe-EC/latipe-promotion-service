@@ -4,8 +4,8 @@
 package server
 
 import (
-	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -71,8 +71,8 @@ func NewServer(
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
-		JSONDecoder:  json.Unmarshal,
-		JSONEncoder:  json.Marshal,
+		JSONDecoder:  sonic.Unmarshal,
+		JSONEncoder:  sonic.Marshal,
 		ErrorHandler: responses.CustomErrorHandler,
 	})
 
@@ -121,7 +121,7 @@ func NewServer(
 	//fiber dashboard
 	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig),
 		monitor.New(monitor.Config{Title: "Promotion Services Metrics Page (Fiber)"})) // Healthcheck
-	h, _ := healthService.NewHealthCheckService(cfg)
+	h, _ = healthService.NewHealthCheckService(cfg)
 	app.Get("/health", basicauth.New(basicAuthConfig), adaptor.HTTPHandlerFunc(h.HandlerFunc))
 	app.Use(healthcheck.New(healthcheck.Config{
 		LivenessProbe: func(c *fiber.Ctx) bool {

@@ -1,7 +1,7 @@
 package rabbitclient
 
 import (
-	"encoding/json"
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2/log"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"latipe-promotion-services/config"
@@ -30,7 +30,7 @@ func FailOnError(err error, msg string) {
 }
 
 func ParseOrderToByte(request interface{}) ([]byte, error) {
-	jsonObj, err := json.Marshal(&request)
+	jsonObj, err := sonic.Marshal(&request)
 	if err != nil {
 		return nil, err
 	}

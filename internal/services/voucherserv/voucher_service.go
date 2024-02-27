@@ -125,7 +125,7 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 	return resp, err
 }
 
-func (sh VoucherService) CheckoutVoucher(ctx context.Context, req *dto.PurchaseVoucherRequest) (*dto.UseVoucherResponse, error) {
+func (sh VoucherService) CheckInVoucherPurchase(ctx context.Context, req *dto.PurchaseVoucherRequest) (*dto.UseVoucherResponse, error) {
 	resp := dto.UseVoucherResponse{}
 
 	if req.PaymentVoucher != nil {
@@ -167,10 +167,6 @@ func (sh VoucherService) CheckoutVoucher(ctx context.Context, req *dto.PurchaseV
 				return nil, err
 			}
 
-			if i.StoreId != voucher.OwnerVoucher {
-				return nil, responses.ErrUnableApplyVoucher
-			}
-
 			if err := sh.validateVoucherRequirement(ctx, req, voucher, i.SubTotal); err != nil {
 				return nil, err
 			}
@@ -182,6 +178,40 @@ func (sh VoucherService) CheckoutVoucher(ctx context.Context, req *dto.PurchaseV
 			return nil, err
 		}
 	}
+
+	return &resp, nil
+}
+
+func (sh VoucherService) CheckoutPurchase(ctx context.Context, req *dto.CheckoutVoucherRequest) (*dto.CheckoutVoucherResponse, error) {
+	resp := dto.CheckoutVoucherResponse{}
+	var voucherResp []dto.VoucherUserDetail
+
+	for _, i := range req.Vouchers {
+		var respData dto.VoucherUserDetail
+		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := mapper.BindingStruct(voucher, &respData); err != nil {
+			return nil, err
+		}
+
+		totalVouchers, err := sh.voucherRepos.CheckUsableVoucherOfUser(ctx, req.UserID, voucher.VoucherCode)
+		if err != nil {
+			return nil, err
+		}
+
+		if totalVouchers >= voucher.VoucherRequire.MaxVoucherPerUser {
+			respData.Usable = false
+		} else {
+			respData.Usable = true
+		}
+
+		respData.CountUsable = voucher.VoucherRequire.MaxVoucherPerUser - totalVouchers
+		voucherResp = append(voucherResp, respData)
+	}
+	resp.Items = voucherResp
 
 	return &resp, nil
 }
@@ -424,6 +454,27 @@ func (sh VoucherService) GetAllVoucher(ctx context.Context, voucherCode string, 
 	return &listResp, err
 }
 
+func (sh VoucherService) GetComingVoucher(ctx context.Context, query *pagable.Query) (*pagable.ListResponse, error) {
+	vouchers, total, err := sh.voucherRepos.GetComingVoucher(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var voucherResp []dto.VoucherRespDetail
+	if err := mapper.BindingStruct(vouchers, &voucherResp); err != nil {
+		return nil, err
+	}
+
+	listResp := pagable.ListResponse{}
+	listResp.Items = voucherResp
+	listResp.Page = query.GetPage()
+	listResp.Size = query.GetSize()
+	listResp.Total = query.GetTotalPages(total)
+	listResp.HasMore = query.GetHasMore(total)
+
+	return &listResp, err
+}
+
 func (sh VoucherService) GetUserVoucher(ctx context.Context, voucherCode string, userId string, query *pagable.Query) (*pagable.ListResponse, error) {
 	vouchers, total, err := sh.voucherRepos.GetVoucherForUser(ctx, voucherCode, query)
 	if err != nil {
@@ -436,7 +487,7 @@ func (sh VoucherService) GetUserVoucher(ctx context.Context, voucherCode string,
 	}
 
 	for index, i := range voucherResp {
-		totalVouchers, err := sh.voucherRepos.CheckUsableVoucherOfUser(ctx, voucherCode, userId)
+		totalVouchers, err := sh.voucherRepos.CheckUsableVoucherOfUser(ctx, userId, i.VoucherCode)
 		if err != nil {
 			return nil, err
 		}
@@ -446,6 +497,8 @@ func (sh VoucherService) GetUserVoucher(ctx context.Context, voucherCode string,
 		} else {
 			voucherResp[index].Usable = true
 		}
+
+		voucherResp[index].CountUsable = i.VoucherRequire.MaxVoucherPerUser - totalVouchers
 	}
 
 	listResp := pagable.ListResponse{}

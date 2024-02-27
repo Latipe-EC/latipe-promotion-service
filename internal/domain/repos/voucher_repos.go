@@ -101,6 +101,31 @@ func (dr VoucherRepository) GetAll(ctx context.Context, voucherCode string, quer
 	return delis, int(total), err
 }
 
+func (dr VoucherRepository) GetComingVoucher(ctx context.Context, query *pagable.Query) ([]entities.Voucher, int, error) {
+	var delis []entities.Voucher
+
+	tomorrow := time.Now().Add(24 * time.Hour)
+	tomorrow = time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, tomorrow.Location())
+
+	filter := bson.M{"stated_time": bson.M{"$gte": tomorrow}, "status": entities.ACTIVE}
+
+	opts := options.Find().SetLimit(int64(query.GetSize())).SetSkip(int64(query.GetOffset()))
+	cursor, err := dr.voucherCollection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if err = cursor.All(ctx, &delis); err != nil {
+		return nil, 0, err
+	}
+
+	total, err := dr.voucherCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	return delis, int(total), err
+}
+
 func (dr VoucherRepository) GetVoucherForUser(ctx context.Context, voucherCode string, query *pagable.Query) ([]entities.Voucher, int, error) {
 	var delis []entities.Voucher
 

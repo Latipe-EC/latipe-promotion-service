@@ -37,7 +37,7 @@ func (v voucherServer) CheckUsingVouchersForCheckout(ctx context.Context, reques
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
 
-	resp, err := v.voucherService.CheckoutVoucher(ctx, &req)
+	resp, err := v.voucherService.CheckInVoucherPurchase(ctx, &req)
 	if err != nil {
 		log.Errorf("%v", err)
 		if errors.Is(err, responses.ErrUnableApplyVoucher) {

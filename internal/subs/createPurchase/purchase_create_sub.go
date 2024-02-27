@@ -2,7 +2,7 @@ package createPurchase
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2/log"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"latipe-promotion-services/config"
@@ -102,7 +102,7 @@ func (orch PurchaseCreateSubscriber) handleMessage(msg *amqp.Delivery) error {
 
 	messageDTO := message.CreatePurchaseMessage{}
 
-	if err := json.Unmarshal(msg.Body, &messageDTO); err != nil {
+	if err := sonic.Unmarshal(msg.Body, &messageDTO); err != nil {
 		log.Infof("Parse message to order failed cause: %s", err)
 		return err
 	}

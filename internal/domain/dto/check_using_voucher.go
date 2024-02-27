@@ -2,6 +2,15 @@ package dto
 
 import "time"
 
+type CheckoutVoucherRequest struct {
+	UserID   string
+	Vouchers []string `json:"vouchers"`
+}
+
+type CheckoutVoucherResponse struct {
+	Items []VoucherUserDetail `json:"items"`
+}
+
 type PurchaseVoucherRequest struct {
 	UserId              string               `json:"user_id"`
 	OrderTotalAmount    int                  `json:"order_total_amount" validate:"required"`

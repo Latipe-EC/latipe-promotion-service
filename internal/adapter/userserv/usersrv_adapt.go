@@ -2,14 +2,13 @@ package userserv
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"latipe-promotion-services/config"
 	"latipe-promotion-services/internal/adapter/userserv/dto"
-	"latipe-promotion-services/pkgs/mapper"
 )
 
 type UserService struct {
@@ -45,7 +44,7 @@ func (us UserService) GetAddressById(ctx context.Context, request *dto.GetAddres
 	}
 
 	var regResp *dto.GetAddressResponse
-	err = mapper.BindingStruct(resp.Body(), &regResp)
+	err = sonic.Unmarshal(resp.Body(), &regResp)
 	if err != nil {
 		log.Errorf("[Get address]: %s", err)
 		return nil, err
@@ -75,7 +74,7 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 
 	var regResp *dto.AuthorizationResponse
 
-	if err := json.Unmarshal(resp.Body(), &regResp); err != nil {
+	if err := sonic.Unmarshal(resp.Body(), &regResp); err != nil {
 		log.Errorf("[Authorize token]: %s", err)
 		return nil, err
 	}

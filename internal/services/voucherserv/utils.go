@@ -47,18 +47,13 @@ func (sh VoucherService) validateVoucherRequirement(ctx context.Context, req *dt
 }
 
 func ParseStringToTime(dateStr string) time.Time {
-	date, err := time.Parse("2006-01-02", dateStr)
+	layout := "2006-01-02T15:04"
+	date, err := time.Parse(layout, dateStr)
 	if err != nil {
 		return time.Now()
 	}
 
 	return date
-}
-
-func ParseDateToString(date time.Time) string {
-	layout := "2006-01-02"
-	formattedTime := date.Format(layout)
-	return formattedTime
 }
 
 func ValidateVoucherRequest(req *dto.CreateVoucherRequest) error {

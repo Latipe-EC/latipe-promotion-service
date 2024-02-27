@@ -271,7 +271,48 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
-	dataResp, err := api.service.CheckoutVoucher(ctx.Context(), &request)
+	dataResp, err := api.service.CheckInVoucherPurchase(ctx.Context(), &request)
+	if err != nil {
+		log.Errorf("%v", err)
+		switch err {
+		case mongo.ErrNoDocuments:
+			return responses.ErrNotFoundRecord
+		}
+		return err
+	}
+	resp := responses.DefaultSuccess
+	resp.Data = dataResp
+	return resp.JSON(ctx)
+}
+
+func (api VoucherHandle) CheckoutPurchaseVoucher(ctx *fiber.Ctx) error {
+	var request dto.CheckoutVoucherRequest
+
+	if err := ctx.BodyParser(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	userId := fmt.Sprintf("%s", ctx.Locals("user_id"))
+	if userId == "" {
+		return responses.ErrUnauthenticated
+	}
+
+	request.UserID = userId
+	if err := valid.GetValidator().Validate(&request); err != nil {
+		log.Errorf("%v", err)
+		resp := responses.DefaultError
+		resp.Message = err.Error()
+		resp.Code = http.StatusBadRequest
+
+		return resp.JSON(ctx)
+	}
+
+	dataResp, err := api.service.CheckoutPurchase(ctx.Context(), &request)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {
@@ -341,6 +382,33 @@ func (api VoucherHandle) FindAll(ctx *fiber.Ctx) error {
 		log.Errorf("%v", err)
 		switch err {
 		case mongo.ErrNoDocuments:
+			return responses.ErrNotFoundRecord
+		default:
+			return responses.ErrInternalServer
+		}
+	}
+
+	resp := responses.DefaultSuccess
+	resp.Data = dataResp
+	return resp.JSON(ctx)
+}
+
+func (api VoucherHandle) GetComingVoucher(ctx *fiber.Ctx) error {
+	context := ctx.Context()
+
+	query, err := pagable.GetQueryFromFiberCtx(ctx)
+	if err != nil {
+		return responses.ErrInvalidParameters
+	}
+	request := dto.GetVoucherListRequest{
+		Query: query,
+	}
+
+	dataResp, err := api.service.GetComingVoucher(context, request.Query)
+	if err != nil {
+		log.Errorf("%v", err)
+		switch {
+		case errors.Is(err, mongo.ErrNoDocuments):
 			return responses.ErrNotFoundRecord
 		default:
 			return responses.ErrInternalServer

@@ -84,10 +84,16 @@ func (a AuthMiddleware) RequiredStoreAuthentication() fiber.Handler {
 			return responses.ErrUnauthenticated
 		}
 
-		bearToken = strings.Split(bearToken, " ")[1]
+		str := strings.Split(bearToken, " ")
+		if len(str) < 2 {
+			return responses.ErrUnauthenticated
+		}
+
+		bearToken = str[1]
 		req := dto.AuthorizationRequest{
 			Token: bearToken,
 		}
+
 		resp, err := a.userServ.Authorization(ctx.Context(), &req)
 		if err != nil {
 			return err

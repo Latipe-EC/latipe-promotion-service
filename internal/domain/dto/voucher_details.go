@@ -18,6 +18,8 @@ type VoucherRespDetail struct {
 	EndedTime        time.Time          `json:"ended_time,omitempty"`
 	CreatedAt        time.Time          `json:"created_at,omitempty"`
 	UpdatedAt        time.Time          `json:"updated_at,omitempty"`
+	Usable           bool               `json:"usable,omitempty"`
+	CountUsable      int                `json:"count_usable,omitempty"`
 }
 
 type VoucherRequireResp struct {
@@ -46,4 +48,5 @@ type VoucherUserDetail struct {
 	StatedTime       time.Time          `json:"stated_time,omitempty"`
 	EndedTime        time.Time          `json:"ended_time,omitempty"`
 	Usable           bool               `json:"usable"`
+	CountUsable      int                `json:"count_usable,omitempty"`
 }
