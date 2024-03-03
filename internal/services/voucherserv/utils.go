@@ -10,6 +10,7 @@ import (
 
 func (sh VoucherService) validateVoucherRequirement(ctx context.Context, req *dto.PurchaseVoucherRequest,
 	voucher *entities.Voucher, storeAmount ...int) error {
+	//check time
 	if voucher.VoucherCounts <= 0 || (!voucher.EndedTime.After(time.Now()) && !voucher.StatedTime.Before(time.Now()) ||
 		voucher.Status != entities.ACTIVE) {
 		return responses.ErrVoucherExpiredOrOutOfStock

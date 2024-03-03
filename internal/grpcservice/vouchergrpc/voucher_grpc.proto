@@ -6,37 +6,23 @@ option go_package = "vouchergrpc/";
 
 
 service VoucherService {
-  rpc CheckUsingVouchersForCheckout(CheckoutVoucherRequest) returns (CheckoutVoucherResponse){}
+  rpc CheckoutVoucherForPurchase(CheckoutVoucherRequest) returns (CheckoutVoucherResponse){}
   rpc ApplyVoucherToPurchase(ApplyVoucherRequest) returns(ApplyVoucherResponse){}
 }
 
 message CheckoutVoucherRequest {
   int64 order_total_amount = 1;
   int32 payment_method = 2;
-  FreeShippingVoucher free_shipping_voucher = 3;
-  PaymentVoucher payment_voucher = 4;
-  repeated ShopVoucher shop_vouchers = 5;
-  string user_id = 6;
+  VoucherData voucher_data = 3;
+  string user_id = 4;
 }
 
 message CheckoutVoucherResponse {
-  repeated VoucherDetail store_vouchers = 1;
-  VoucherDetail shipping_voucher = 2;
-  VoucherDetail payment_voucher = 3;
+  VoucherDetail voucher_detail = 1;
 }
 
-message FreeShippingVoucher {
+message VoucherData {
   string voucher_code = 1;
-}
-
-message PaymentVoucher {
-  string voucher_code = 1;
-}
-
-message ShopVoucher {
-  string store_id = 1;
-  int64 sub_total = 2;
-  string voucher_code = 3;
 }
 
 message VoucherDetail {

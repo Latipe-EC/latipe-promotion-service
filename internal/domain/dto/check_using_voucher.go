@@ -12,25 +12,13 @@ type CheckoutVoucherResponse struct {
 }
 
 type PurchaseVoucherRequest struct {
-	UserId              string               `json:"user_id"`
-	OrderTotalAmount    int                  `json:"order_total_amount" validate:"required"`
-	PaymentMethod       int                  `json:"payment_method" validate:"required"`
-	FreeShippingVoucher *FreeShippingVoucher `json:"free_shipping_voucher"`
-	PaymentVoucher      *PaymentVoucher      `json:"payment_voucher"`
-	ShopVouchers        []ShopVoucher        `json:"shop_vouchers"`
+	UserId           string      `json:"user_id"`
+	OrderTotalAmount int         `json:"order_total_amount" validate:"required"`
+	PaymentMethod    int         `json:"payment_method" validate:"required"`
+	VoucherData      VoucherData `json:"voucher_data" validate:"required"`
 }
 
-type FreeShippingVoucher struct {
-	VoucherCode string `json:"voucher_code"`
-}
-
-type PaymentVoucher struct {
-	VoucherCode string `json:"voucher_code"`
-}
-
-type ShopVoucher struct {
-	StoreId     string `json:"store_id"`
-	SubTotal    int    `json:"sub_total"`
+type VoucherData struct {
 	VoucherCode string `json:"voucher_code"`
 }
 
@@ -64,8 +52,6 @@ type CheckingDiscountData struct {
 	MaximumValue    uint    `json:"maximum_value,omitempty"`
 }
 
-type UseVoucherResponse struct {
-	StoreVouchers   []VoucherDetail `json:"store_vouchers"`
-	ShippingVoucher VoucherDetail   `json:"shipping_voucher"`
-	PaymentVoucher  VoucherDetail   `json:"payment_voucher"`
+type CheckoutPurchaseVoucherResponse struct {
+	VoucherDetail VoucherDetail `json:"voucher_detail"`
 }

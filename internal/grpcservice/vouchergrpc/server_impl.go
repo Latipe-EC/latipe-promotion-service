@@ -25,7 +25,7 @@ func NewVoucherServerGRPC(voucherServ *voucherserv.VoucherService) VoucherServic
 	}
 }
 
-func (v voucherServer) CheckUsingVouchersForCheckout(ctx context.Context, request *CheckoutVoucherRequest) (*CheckoutVoucherResponse, error) {
+func (v voucherServer) CheckoutVoucherForPurchase(ctx context.Context, request *CheckoutVoucherRequest) (*CheckoutVoucherResponse, error) {
 	req := dto.PurchaseVoucherRequest{}
 	var response CheckoutVoucherResponse
 
@@ -37,7 +37,7 @@ func (v voucherServer) CheckUsingVouchersForCheckout(ctx context.Context, reques
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("%v", err))
 	}
 
-	resp, err := v.voucherService.CheckInVoucherPurchase(ctx, &req)
+	resp, err := v.voucherService.CheckoutPurchaseVoucherGrpc(ctx, &req)
 	if err != nil {
 		log.Errorf("%v", err)
 		if errors.Is(err, responses.ErrUnableApplyVoucher) {

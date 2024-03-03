@@ -125,58 +125,20 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 	return resp, err
 }
 
-func (sh VoucherService) CheckInVoucherPurchase(ctx context.Context, req *dto.PurchaseVoucherRequest) (*dto.UseVoucherResponse, error) {
-	resp := dto.UseVoucherResponse{}
+func (sh VoucherService) CheckoutPurchaseVoucherGrpc(ctx context.Context, req *dto.PurchaseVoucherRequest) (*dto.CheckoutPurchaseVoucherResponse, error) {
+	resp := dto.CheckoutPurchaseVoucherResponse{}
 
-	if req.PaymentVoucher != nil {
-		voucher, err := sh.voucherRepos.GetByCode(ctx, req.PaymentVoucher.VoucherCode)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := sh.validateVoucherRequirement(ctx, req, voucher); err != nil {
-			return nil, err
-		}
-
-		if err := mapper.BindingStruct(voucher, &resp.PaymentVoucher); err != nil {
-			return nil, err
-		}
+	voucher, err := sh.voucherRepos.GetByCode(ctx, req.VoucherData.VoucherCode)
+	if err != nil {
+		return nil, err
 	}
 
-	if req.FreeShippingVoucher != nil {
-		voucher, err := sh.voucherRepos.GetByCode(ctx, req.FreeShippingVoucher.VoucherCode)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := sh.validateVoucherRequirement(ctx, req, voucher); err != nil {
-			return nil, err
-		}
-
-		if err := mapper.BindingStruct(voucher, &resp.ShippingVoucher); err != nil {
-			return nil, err
-		}
+	if err := sh.validateVoucherRequirement(ctx, req, voucher); err != nil {
+		return nil, err
 	}
 
-	if len(req.ShopVouchers) > 0 {
-		var storeVoucher []*entities.Voucher
-
-		for _, i := range req.ShopVouchers {
-			voucher, err := sh.voucherRepos.GetByCode(ctx, i.VoucherCode)
-			if err != nil {
-				return nil, err
-			}
-
-			if err := sh.validateVoucherRequirement(ctx, req, voucher, i.SubTotal); err != nil {
-				return nil, err
-			}
-
-			storeVoucher = append(storeVoucher, voucher)
-		}
-
-		if err := mapper.BindingStruct(storeVoucher, &resp.StoreVouchers); err != nil {
-			return nil, err
-		}
+	if err := mapper.BindingStruct(voucher, &resp.VoucherDetail); err != nil {
+		return nil, err
 	}
 
 	return &resp, nil

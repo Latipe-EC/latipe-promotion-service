@@ -271,7 +271,7 @@ func (api VoucherHandle) CheckingVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
-	dataResp, err := api.service.CheckInVoucherPurchase(ctx.Context(), &request)
+	dataResp, err := api.service.CheckoutPurchaseVoucherGrpc(ctx.Context(), &request)
 	if err != nil {
 		log.Errorf("%v", err)
 		switch err {
