@@ -114,6 +114,6 @@ func (orch PurchaseCreateSubscriber) handleMessage(msg *amqp.Delivery) error {
 	}
 
 	endTime := time.Now()
-	log.Infof("The message [%v]  was processed successfully - duration:%v", messageDTO.CheckoutData.CheckoutID, endTime.Sub(startTime))
+	log.Infof("The message [%v]  was processed successfully - duration:%v", messageDTO.CheckoutID, endTime.Sub(startTime))
 	return nil
 }

@@ -2,7 +2,9 @@ package voucherserv
 
 import (
 	"context"
+	"errors"
 	"github.com/gofiber/fiber/v2/log"
+	"go.mongodb.org/mongo-driver/mongo"
 	dto "latipe-promotion-services/internal/domain/dto"
 	"latipe-promotion-services/internal/domain/entities"
 	"latipe-promotion-services/internal/domain/message"
@@ -196,92 +198,104 @@ func (sh VoucherService) RollBackVoucher(ctx context.Context, req *dto.RollbackV
 }
 
 func (sh VoucherService) CommitVoucherTransaction(ctx context.Context, msg *message.CreatePurchaseMessage) error {
-	var msgReply []message.ReplyPurchaseMessage
-	msgMap := make(map[string]int)
-	var orderIds []string
-
-	//// Initialize reply message
-	for index, i := range msg.CheckoutData.OrderData {
-		reply := message.ReplyPurchaseMessage{
-			OrderID: i.OrderID,
-			Status:  message.COMMIT_SUCCESS, // Assume success until an error occurs
-		}
-
-		orderIds = append(orderIds, i.OrderID)
-		msgMap[i.StoreID] = index
-		msgReply = append(msgReply, reply)
+	// Initialize reply message
+	reply := message.ReplyPurchaseMessage{
+		OrderID: msg.OrderID,
+		Status:  message.COMMIT_FAIL, // Assume success until an error occurs
 	}
-
-	// Defer the reply message publishing
-	defer func(replyPub *purchaseCreate.ReplyPurchaseTransactionPub, replyMsg []message.ReplyPurchaseMessage) {
-		for _, i := range replyMsg {
-			err := replyPub.ReplyPurchaseMessage(&i)
-			if err != nil {
-				log.Error(err)
-			}
-		}
-	}(sh.voucherReply, msgReply)
-
-	for _, i := range msg.Vouchers {
-		var err error
-		var orderIdLog []string
-
-		voucher, err := sh.voucherRepos.GetByCode(ctx, i)
+	defer func(replyPub *purchaseCreate.ReplyPurchaseTransactionPub) {
+		err := replyPub.ReplyPurchaseMessage(&reply)
 		if err != nil {
 			log.Error(err)
 		}
+	}(sh.voucherReply)
 
-		if voucher.VoucherType == entities.STORE_DISCOUNT {
-			orderIdLog = []string{msgReply[msgMap[voucher.OwnerVoucher]].OrderID}
-		} else {
-			orderIdLog = orderIds
+	for _, code := range msg.VoucherCodes {
+		voucher, err := sh.voucherRepos.GetByCode(ctx, code)
+		if err != nil {
+			log.Error(err)
+			return err
 		}
 
-		err = sh.applyVoucherTransaction(ctx, voucher, orderIdLog, msg)
+		//init using voucher log
+		usingLog := entities.VoucherUsingLog{
+			VoucherCode: code,
+			VoucherID:   voucher.ID,
+			UserID:      msg.UserID,
+			CheckoutPurchase: entities.CheckoutPurchase{
+				CheckoutID: msg.CheckoutID,
+				OrderIDs:   []string{msg.OrderID},
+			},
+			Status: message.COMMIT_SUCCESS,
+		}
 
-		if err != nil {
-			switch voucher.VoucherType {
-			case entities.STORE_DISCOUNT:
-				msgReply[msgMap[voucher.OwnerVoucher]].Status = message.COMMIT_FAIL
-			default:
-				for index, _ := range msgReply {
-					msgReply[index].Status = message.COMMIT_FAIL
+		switch voucher.VoucherType {
+		case entities.FREE_SHIP, entities.STORE_DISCOUNT:
+			err = sh.applyVoucherTransaction(ctx, voucher, &usingLog)
+			if err != nil {
+				log.Error(err)
+			}
+
+		case entities.PAYMENT_DISCOUNT:
+			existLog, err := sh.voucherRepos.FindVoucherLogByVoucherCodeAndCheckoutID(ctx, code, msg.CheckoutID)
+			if err != nil {
+				log.Error(err)
+				switch {
+				case errors.Is(err, mongo.ErrNoDocuments):
+					err = sh.applyVoucherTransaction(ctx, voucher, &usingLog)
+					if err != nil {
+						log.Error(err)
+					}
+				default:
+					return err
 				}
-				break
+			} else {
+				existLog.CheckoutPurchase.OrderIDs = append(existLog.CheckoutPurchase.OrderIDs, msg.OrderID)
+				if err = sh.updatePaymentVoucherTransaction(ctx, voucher, existLog); err != nil {
+					return err
+				}
 			}
 		}
-
 	}
 
+	reply.Status = message.COMMIT_SUCCESS
 	return nil
 }
 
-func (sh VoucherService) applyVoucherTransaction(ctx context.Context, voucher *entities.Voucher, order []string, req *message.CreatePurchaseMessage) error {
+func (sh VoucherService) applyVoucherTransaction(ctx context.Context, voucher *entities.Voucher, voucherLog *entities.VoucherUsingLog) error {
 
 	var err error
 
 	if voucher.VoucherCounts < 0 {
 		err = responses.ErrUnableApplyVoucher
 	}
-
-	usingLog := entities.VoucherUsingLog{
-		VoucherCode: voucher.VoucherCode,
-		VoucherID:   voucher.ID,
-		UserID:      req.UserId,
-		CheckoutPurchase: entities.CheckoutPurchase{
-			CheckoutID: req.CheckoutData.CheckoutID,
-			OrderIDs:   order,
-		},
-		Status: message.COMMIT_SUCCESS,
-	}
-
 	voucher.VoucherCounts-- //decrease voucher count
 
 	if err = sh.voucherRepos.UpdateVoucherCounts(ctx, voucher); err != nil {
 		return err
 	}
 
-	if err = sh.voucherRepos.CreateUsingVoucherLog(ctx, &usingLog); err != nil {
+	if err = sh.voucherRepos.CreateUsingVoucherLog(ctx, voucherLog); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (sh VoucherService) updatePaymentVoucherTransaction(ctx context.Context, voucher *entities.Voucher, voucherLog *entities.VoucherUsingLog) error {
+
+	var err error
+
+	if voucher.VoucherCounts < 0 {
+		err = responses.ErrUnableApplyVoucher
+	}
+	voucher.VoucherCounts-- //decrease voucher count
+
+	if err = sh.voucherRepos.UpdateVoucherCounts(ctx, voucher); err != nil {
+		return err
+	}
+
+	if err = sh.voucherRepos.UpdateUsingVoucherLog(ctx, voucherLog); err != nil {
 		return err
 	}
 

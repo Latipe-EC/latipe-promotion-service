@@ -6,14 +6,10 @@ const (
 )
 
 type CreatePurchaseMessage struct {
-	UserId       string          `json:"user_id"`
-	CheckoutData CheckoutRequest `json:"checkout_data"`
-	Vouchers     []string        `json:"vouchers"`
-}
-
-type CheckoutRequest struct {
-	CheckoutID string      `json:"checkout_id"`
-	OrderData  []OrderData `json:"order_data"`
+	CheckoutID   string   `json:"checkout_id"`
+	UserID       string   `json:"user_id"`
+	OrderID      string   `json:"order_id"`
+	VoucherCodes []string `json:"voucher_codes"`
 }
 
 type OrderData struct {
