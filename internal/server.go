@@ -78,7 +78,7 @@ func NewServer(
 	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://127.0.0.1:5500, http://127.0.0.1:5173",
+		AllowOrigins: "http://127.0.0.1:5500,http://127.0.0.1:5173",
 		AllowHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 		AllowMethods: "GET,HEAD,OPTIONS,POST,PUT",
 	}))
