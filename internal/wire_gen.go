@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
 	"latipe-promotion-services/config"
@@ -90,15 +91,18 @@ func NewServer(
 		ErrorHandler: responses.CustomErrorHandler,
 	})
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://127.0.0.1:5500,http://127.0.0.1:5173",
-		AllowHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-		AllowMethods: "GET,HEAD,OPTIONS,POST,PUT",
-	}))
+	recoverConfig := recover2.ConfigDefault
+	app.Use(recover2.New(recoverConfig))
 
 	app.Use(logger.New())
 	api2 := app.Group("/api")
 	v1 := api2.Group("/v1")
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://127.0.0.1:5500, http://127.0.0.1:5173",
+		AllowHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+		AllowMethods: "GET,HEAD,OPTIONS,POST,PUT",
+	}))
 
 	basicAuthConfig := basicauth.Config{
 		Users: map[string]string{

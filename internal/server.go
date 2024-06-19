@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	recoverFiber "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/google/wire"
 	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
@@ -77,15 +78,18 @@ func NewServer(
 		ErrorHandler: responses.CustomErrorHandler,
 	})
 
+	recoverConfig := recoverFiber.ConfigDefault
+	app.Use(recoverFiber.New(recoverConfig))
+
+	app.Use(logger.New())
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://127.0.0.1:5500, http://127.0.0.1:5173",
 		AllowHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 		AllowMethods: "GET,HEAD,OPTIONS,POST,PUT",
 	}))
-
-	app.Use(logger.New())
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
 
 	//providing basic authentication for metrics endpoints
 	basicAuthConfig := basicauth.Config{

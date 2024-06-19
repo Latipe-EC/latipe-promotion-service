@@ -30,12 +30,12 @@ func main() {
 
 	//api handler
 	wg.Add(1)
-	go runWithRecovery(func() {
+	go func() {
 		defer wg.Done()
 		if err := serv.App().Listen(serv.Config().Server.RestPort); err != nil {
 			fmt.Printf("%s", err)
 		}
-	})
+	}()
 
 	//grpc handler
 	wg.Add(1)

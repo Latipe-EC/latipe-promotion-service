@@ -7,7 +7,7 @@ require (
 	github.com/bytedance/sonic v1.11.1
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/go-resty/resty/v2 v2.10.0
-	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/google/wire v0.5.0
 	github.com/hellofresh/health-go/v5 v5.5.2
 	github.com/rabbitmq/amqp091-go v1.9.0
