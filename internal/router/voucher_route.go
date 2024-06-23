@@ -43,8 +43,8 @@ func (o voucherRouter) Init(root *fiber.Router) {
 	{
 		store.Get("", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.GetAllVoucherForStore)
 		store.Post("", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.StoreCreateNewVoucher)
+		store.Patch("/code/:code", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.UpdateStatusVoucher)
 		store.Get("/code/:code", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.GetByCode)
-		store.Patch("/cancel", o.middleware.RequiredStoreAuthentication(), o.voucherHandler.StoreCancelStatusVoucher)
 	}
 
 	voucher.Post("/checking", o.middleware.RequiredAuthentication(), o.voucherHandler.CheckingVoucher)

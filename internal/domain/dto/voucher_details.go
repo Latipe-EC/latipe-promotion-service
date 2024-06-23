@@ -20,6 +20,7 @@ type VoucherRespDetail struct {
 	UpdatedAt        time.Time          `json:"updated_at,omitempty"`
 	Usable           bool               `json:"usable,omitempty"`
 	CountUsable      int                `json:"count_usable,omitempty"`
+	TotalCounts      int                `json:"total_counts"`
 }
 
 type VoucherRequireResp struct {
@@ -49,4 +50,5 @@ type VoucherUserDetail struct {
 	EndedTime        time.Time          `json:"ended_time,omitempty"`
 	Usable           bool               `json:"usable"`
 	CountUsable      int                `json:"count_usable,omitempty"`
+	TotalCounts      int                `json:"total_counts"`
 }

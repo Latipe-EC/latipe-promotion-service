@@ -48,13 +48,16 @@ func (api VoucherHandle) CreateNewVoucher(ctx *fiber.Ctx) error {
 
 	dataResp, err := api.service.CreateVoucher(ctx.Context(), &request)
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return responses.ErrExistVoucherCode
+		switch {
+		case mongo.IsDuplicateKeyError(err):
+			return err
+		case errors.Is(err, responses.ErrInvalidDatetime):
+			return err
+		case errors.Is(err, responses.ErrBadRequest):
+			return err
+		default:
+			return responses.ErrInternalServer
 		}
-		if errors.Is(err, responses.ErrInvalidVoucherData) {
-			return responses.ErrInvalidVoucherData
-		}
-		return responses.ErrInternalServer
 	}
 
 	resp := responses.DefaultSuccess
@@ -93,13 +96,18 @@ func (api VoucherHandle) StoreCreateNewVoucher(ctx *fiber.Ctx) error {
 	request.StoreID = storeId
 	dataResp, err := api.service.CreateVoucher(ctx.Context(), &request)
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return responses.ErrExistVoucherCode
+		switch {
+		case mongo.IsDuplicateKeyError(err):
+			return err
+		case errors.Is(err, responses.ErrInvalidDatetime):
+			return err
+		case errors.Is(err, responses.ErrOutOfStorePolicy):
+			return err
+		case errors.Is(err, responses.ErrBadRequest):
+			return err
+		default:
+			return responses.ErrInternalServer
 		}
-		if errors.Is(err, responses.ErrInvalidVoucherData) {
-			return responses.ErrInvalidVoucherData
-		}
-		return responses.ErrInternalServer
 	}
 
 	resp := responses.DefaultSuccess
@@ -130,6 +138,9 @@ func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
 		return resp.JSON(ctx)
 	}
 
+	storeId := fmt.Sprintf("%s", ctx.Locals(middleware.STORE_ID))
+	request.StoreID = storeId
+
 	if err := valid.GetValidator().Validate(&request); err != nil {
 		log.Errorf("%v", err)
 		resp := responses.DefaultError
@@ -141,10 +152,10 @@ func (api VoucherHandle) UpdateStatusVoucher(ctx *fiber.Ctx) error {
 
 	err := api.service.UpdateVoucherStatus(ctx.Context(), &request)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return responses.ErrNotFound
 		}
-
+		return responses.ErrInternalServer
 	}
 
 	resp := responses.DefaultSuccess

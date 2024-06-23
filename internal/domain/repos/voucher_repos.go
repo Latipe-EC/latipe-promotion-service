@@ -345,3 +345,31 @@ func (dr VoucherRepository) FindVoucherLogByVoucherCodeAndCheckoutID(ctx context
 
 	return &results, err
 }
+
+// CountAllVoucherCreatedInCurrentMonthByStoreId counts all vouchers created in the current month by store ID.
+func (dr VoucherRepository) CountAllVoucherCreatedInCurrentMonthByStoreId(ctx context.Context, storeId string) (int, error) {
+	now := time.Now()
+	year, month, _ := now.Date()
+	location := now.Location()
+
+	// Define the start and end of the current month
+	startDate := time.Date(year, month, 1, 0, 0, 0, 0, location)
+	endDate := startDate.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	// Create filter for vouchers created in the current month and by the specified store ID
+	filter := bson.M{
+		"created_at": bson.M{
+			"$gte": startDate,
+			"$lte": endDate,
+		},
+		"owner_voucher": storeId,
+	}
+
+	// Count the number of vouchers that match the filter
+	voucherCount, err := dr.voucherCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(voucherCount), nil
+}

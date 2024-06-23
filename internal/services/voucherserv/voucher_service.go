@@ -33,7 +33,8 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 
 	var dao entities.Voucher
 
-	if err := ValidateVoucherRequest(req); err != nil {
+	if err := sh.validateVoucherRequest(ctx, req); err != nil {
+		log.Error(err)
 		return "", err
 	}
 
@@ -56,12 +57,19 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 			Detail:         req.Detail,
 			StatedTime:     ParseStringToTime(req.StatedTime),
 			EndedTime:      ParseStringToTime(req.EndedTime),
-			OwnerVoucher:   "ADMIN",
 			Status:         entities.PENDING,
 			VoucherRequire: &vRequired,
 			DiscountData:   &discount,
 		}
+
+		if req.StoreID == "" {
+			voucherDAO.OwnerVoucher = "ADMIN"
+		} else {
+			voucherDAO.OwnerVoucher = req.StoreID
+		}
+
 		dao = voucherDAO
+
 	case entities.PAYMENT_DISCOUNT:
 		vRequired := entities.VoucherRequire{
 			MinRequire:        req.VoucherRequire.MinRequire,
@@ -117,6 +125,7 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 		}
 		dao = voucherDAO
 	}
+	dao.TotalCounts = dao.VoucherCounts
 
 	resp, err := sh.voucherRepos.CreateVoucher(ctx, &dao)
 	if err != nil {
@@ -334,6 +343,33 @@ func (sh VoucherService) UpdateVoucherStatus(ctx context.Context, req *dto.Updat
 	voucher, err := sh.voucherRepos.GetByCode(ctx, strings.ToUpper(req.VoucherCode))
 	if err != nil {
 		return err
+	}
+
+	if req.GetStatus() == dto.INVALID_VOUCHER_STATUS {
+		return responses.ErrInvalidVoucherStatus
+	}
+
+	voucher.Status = req.Status
+
+	if err := sh.voucherRepos.UpdateStatus(ctx, voucher); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (sh VoucherService) UpdateVoucherStatusByStore(ctx context.Context, req *dto.UpdateVoucherRequest) error {
+	voucher, err := sh.voucherRepos.GetByCode(ctx, strings.ToUpper(req.VoucherCode))
+	if err != nil {
+		return err
+	}
+
+	if voucher.OwnerVoucher != req.StoreID {
+		return responses.ErrPermissionDenied
+	}
+
+	if req.GetStatus() == dto.INVALID_VOUCHER_STATUS && voucher.Status == entities.INACTIVE {
+		return responses.ErrInvalidVoucherStatus
 	}
 
 	voucher.Status = req.Status

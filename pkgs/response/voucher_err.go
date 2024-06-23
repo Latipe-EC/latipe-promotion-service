@@ -96,4 +96,19 @@ var (
 		ErrorCode: "GE015",
 		Message:   "The order does not meet the requirements for using voucher",
 	}
+	ErrInvalidVoucherStatus = &Error{
+		Code:      400,
+		ErrorCode: "GE016",
+		Message:   "Invalid voucher status (0: pending, 1: active, -1: inactive)",
+	}
+	ErrInvalidDatetime = &Error{
+		Code:      400,
+		ErrorCode: "GE017",
+		Message:   "Invalid time may be started time or ended time is invalid",
+	}
+	ErrOutOfStorePolicy = &Error{
+		Code:      400,
+		ErrorCode: "GE018",
+		Message:   "The voucher does not meet the store policy (max voucher counts, max fixed value, max percent)",
+	}
 )

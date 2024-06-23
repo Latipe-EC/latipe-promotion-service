@@ -5,29 +5,12 @@ import (
 	"time"
 )
 
-const (
-	FREE_SHIP        = 1
-	PAYMENT_DISCOUNT = 2
-	STORE_DISCOUNT   = 3
-
-	PENDING  = 0
-	ACTIVE   = 1
-	INACTIVE = -1
-
-	VOUCHER_APPLY_SUCCESS = 1
-	VOUCHER_APPLY_FAILED  = -1
-
-	FIXED_DISCOUNT   = 0
-	PERCENT_DISCOUNT = 1
-
-	COD_METHOD = 1
-)
-
 type Voucher struct {
 	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	VoucherCode    string             `json:"voucher_code" bson:"voucher_code"`
 	VoucherType    int                `json:"voucher_type" bson:"voucher_type"`
 	VoucherCounts  int                `json:"voucher_counts" bson:"voucher_counts"`
+	TotalCounts    int                `json:"total_counts" bson:"total_counts"`
 	Detail         string             `json:"detail"  bson:"detail,omitempty"`
 	OwnerVoucher   string             `json:"owner_voucher" bson:"owner_voucher"`
 	Status         int                `json:"status" bson:"status"`
