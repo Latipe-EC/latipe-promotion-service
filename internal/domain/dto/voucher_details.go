@@ -30,7 +30,7 @@ type VoucherRequireResp struct {
 }
 
 type DiscountDataResp struct {
-	DiscountType    int     `json:"discount_type,omitempty"`
+	DiscountType    int     `json:"discount_type"`
 	ShippingValue   uint    `json:"shipping_value,omitempty"`
 	DiscountValue   uint    `json:"discount_value,omitempty"`
 	DiscountPercent float32 `json:"discount_percent,omitempty"`

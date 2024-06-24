@@ -72,7 +72,6 @@ func (sh VoucherService) validateVoucherRequest(ctx context.Context, req *dto.Cr
 
 	if req.VoucherType == entities.STORE_DISCOUNT && !sh.validateStoreVoucherPolicy(ctx, req) {
 		return responses.ErrOutOfStorePolicy
-
 	}
 
 	if startTime.Before(currentTime) || endedTime.Before(currentTime) || startTime.After(endedTime) {
@@ -114,6 +113,10 @@ func (sh VoucherService) validateVoucherRequest(ctx context.Context, req *dto.Cr
 
 func (sh VoucherService) validateStoreVoucherPolicy(ctx context.Context, req *dto.CreateVoucherRequest) bool {
 	if req.VoucherCounts > entities.STORE_MAX_VC_COUNTS_POLICY {
+		return false
+	}
+
+	if req.DiscountData.DiscountType == entities.FREE_SHIP {
 		return false
 	}
 
