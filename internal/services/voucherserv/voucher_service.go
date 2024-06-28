@@ -33,6 +33,7 @@ func (sh VoucherService) CreateVoucher(ctx context.Context, req *dto.CreateVouch
 
 	var dao entities.Voucher
 
+	req.VoucherCode = strings.TrimSpace(req.VoucherCode)
 	if err := sh.validateVoucherRequest(ctx, req); err != nil {
 		log.Error(err)
 		return "", err
