@@ -41,6 +41,7 @@ type VoucherUserDetail struct {
 	ID               string             `json:"id,omitempty"`
 	VoucherCode      string             `json:"voucher_code"`
 	VoucherType      int                `json:"voucher_type"`
+	Status           int                `json:"status"`
 	VoucherCounts    int                `json:"voucher_counts,omitempty"`
 	Detail           string             `json:"detail,omitempty"`
 	OwnerVoucher     string             `json:"owner_voucher,omitempty"`
